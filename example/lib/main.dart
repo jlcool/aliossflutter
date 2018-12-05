@@ -22,7 +22,6 @@ class _MyAppState extends State<MyApp> {
       setState(() {
        _progress=data.getProgress();
       });
-
     });
   }
   void _init() async{
