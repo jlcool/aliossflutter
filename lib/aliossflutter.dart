@@ -14,13 +14,8 @@ import 'package:flutter/services.dart';
 
   //监听回调方法
   Future<dynamic> _handler(MethodCall methodCall) {
-    print("_handler:"+ methodCall.method);
     if ("onProgress" == methodCall.method) {//进度
-//      double currentSize=methodCall.arguments["currentSize"];
-//      double totalSize=methodCall.arguments["totalSize"];
-      print("_handler 2 currentSize2:"+methodCall.arguments["currentSize"].toString());
       ProgressResponse res=new  ProgressResponse(currentSize:double.parse(methodCall.arguments["currentSize"].toString()),totalSize:double.parse( methodCall.arguments["totalSize"].toString()));
-      print("_handler222222:"+res.totalSize.toString());
       _responseUploadController
           .add(res);
     }
