@@ -14,7 +14,7 @@
 /**字符串加密 */
 -(NSString *)doEncryptStr:(NSString *)originalStr;
 /**字符串解密 */
--(NSString*)doDecEncryptStr:(NSString *)encryptStr;
+-(NSString*)doDecEncryptStr:(NSString *)encryptStr  key:(NSString *)key;
 /**十六进制解密 */
 -(NSString *)doEncryptHex:(NSString *)originalStr;
 /**十六进制加密 */

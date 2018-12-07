@@ -74,7 +74,7 @@ OSSClient *oss ;
                                                                     options:kNilOptions
                                                                       error:nil];
              JKEncrypt * en = [[JKEncrypt alloc]init];
-            NSString *data=[en doDecEncryptStr:[object objectForKey:@"Data"]];
+            NSString *data=[en doDecEncryptStr:[object objectForKey:@"Data"] key:crypt_key];
            NSLog(@"get token data: %@", data);
             NSDictionary *ossobject = [NSJSONSerialization JSONObjectWithData: [data dataUsingEncoding: NSUTF8StringEncoding]
                                                                     options:kNilOptions

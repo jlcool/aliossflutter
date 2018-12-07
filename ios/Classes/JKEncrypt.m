@@ -63,7 +63,7 @@
 
 
 
--(NSString*)doDecEncryptStr:(NSString *)encryptStr{
+-(NSString*)doDecEncryptStr:(NSString *)encryptStr  key:(NSString *)key{
     
     NSData *encryptData = [GTMBase64 decodeData:[encryptStr dataUsingEncoding:NSUTF8StringEncoding]];
     
@@ -79,7 +79,7 @@
     bufferPtr = malloc( bufferPtrSize * sizeof(uint8_t));
     memset((void *)bufferPtr, 0x0, bufferPtrSize);
     
-    const void *vkey = (const void *) [gkey UTF8String];
+    const void *vkey = (const void *) [key UTF8String];
     
     const void *vinitVec = (const void *) [gIv UTF8String];
     
