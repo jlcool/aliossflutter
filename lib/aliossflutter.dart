@@ -33,4 +33,10 @@ import 'package:flutter/services.dart';
         <String, String>{"stsserver": stsserver, "endpoint": endpoint, "cryptkey": cryptkey});
 
   }
+  //初始化
+    Future signUrl(String bucket, String key,{String type="0",String interval="1800"}) async {
+    return await _channel.invokeMethod('signurl',
+        <String, String>{"bucket": bucket, "key": key, "type": type,"interval":interval});
+
+  }
 

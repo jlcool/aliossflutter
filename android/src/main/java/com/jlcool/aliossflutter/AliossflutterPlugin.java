@@ -50,6 +50,9 @@ public class AliossflutterPlugin implements MethodCallHandler {
       case "init":
         init(call,result);
         break;
+      case "signurl":
+        signUrl(call,result);
+        break;
       default:
         result.notImplemented();
         break;
@@ -129,5 +132,37 @@ if(oss==null){
 
   );
 }
+  }
+  private void signUrl(final MethodCall call,final Result _result)  {
+    if(oss==null){
+      Map<String, String> m1 = new HashMap();
+      m1.put("result", "fail");
+      m1.put("message","请先初始化");
+      _result.success(m1);
+    }else {
+      try {
+        final String bucket = call.argument("bucket");
+        final String key = call.argument("key");
+        final String type = call.argument("type");
+        final String interval = call.argument("interval");
+        Map<String, String> m1 = new HashMap();
+        m1.put("result", "success");
+
+        if (type == "0") {
+
+          m1.put("url",oss.presignPublicObjectURL(bucket, key));
+
+        } else {
+          m1.put("url",oss.presignConstrainedObjectURL(bucket, key, Long.parseLong(interval)));
+        }
+        m1.put("test", "test");
+        _result.success(m1);
+      }catch (ClientException ex){
+        Map<String, String> m1 = new HashMap();
+        m1.put("result", "fail");
+        m1.put("message",ex.toString());
+        _result.success(m1);
+      }
+    }
   }
 }
