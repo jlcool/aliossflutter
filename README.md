@@ -93,8 +93,7 @@ alioss.responseFromSign.listen((data){
     });
 ```
 
- ```
- 监听进度 上传和下载共用
+ 监听进度上传和下载共用
 ```dart
 alioss.responseFromProgress.listen((data){
  setState(() {
