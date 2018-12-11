@@ -75,6 +75,7 @@ alioss.responseFromDownload.listen((data) {
         _msg="下载失败";
       }
     });
+```
 url签名：
 ```dart
 //type=1 签名私有资源
