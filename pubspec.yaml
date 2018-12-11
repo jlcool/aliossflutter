@@ -8,11 +8,12 @@ environment:
   sdk: ">=2.0.0-dev.68.0 <3.0.0"
 
 dependencies:
+  uuid: ^1.0.3
   flutter:
     sdk: flutter
 
 # For information on the generic Dart part of this file, see the
-# following page: https://www.dartlang.org/tools/pub/pubspec
+# following page: https://www.dartlang.org/tools/pub/pubspec 
 
 # The following section is specific to Flutter.
 flutter:

@@ -22,7 +22,7 @@ dev_dependencies:
   aliossflutter:
     path: ../
 
-# For information on the generic Dart part of this file, see the
+# For information on the generic Dart part of this file, see the 
 # following page: https://www.dartlang.org/tools/pub/pubspec
 
 # The following section is specific to Flutter.
