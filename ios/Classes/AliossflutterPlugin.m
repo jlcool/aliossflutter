@@ -21,31 +21,35 @@ OSSClient *oss ;
     if ([@"init" isEqualToString:call.method]) {         
             [self init:call result:result];
              return;
-    }
-    if ([@"upload" isEqualToString:call.method]) {
+    }else if ([@"upload" isEqualToString:call.method]) {
         [self update:call result:result];
         return;
+    }
+    else if ([@"download" isEqualToString:call.method]) {
+        [self download:call result:result];
+        return;
+    }else if ([@"signurl" isEqualToString:call.method]) {
+        [self signUrl:call result:result];
+        return;
     }else{
-            result(FlutterMethodNotImplemented);
+        result(FlutterMethodNotImplemented);
     }
   
 }
 - (void)init:(FlutterMethodCall*)call result:(FlutterResult)result {
     
     endpoint = call.arguments[@"endpoint"];
-    // 构造请求访问您的业务server
     NSString *stsServer =call.arguments[@"stsserver"];
     NSString *crypt_key =call.arguments[@"cryptkey"];
+    NSString *_id =call.arguments[@"id"];
+    
     id<OSSCredentialProvider> credential1 = [[OSSFederationCredentialProvider alloc] initWithFederationTokenGetter:^OSSFederationToken * {
         
-        
+        NSLog(@"init credential1");
         NSURL * url = [NSURL URLWithString:stsServer];
         NSURLRequest * request = [NSURLRequest requestWithURL:url];
         OSSTaskCompletionSource * tcs = [OSSTaskCompletionSource taskCompletionSource];
-        
         NSURLSession * session = [NSURLSession sharedSession];
-        
-        
         // 发送请求
         NSURLSessionTask * sessionTask = [session dataTaskWithRequest:request
                                           
@@ -62,24 +66,23 @@ OSSClient *oss ;
         // 解析结果
         if (tcs.task.error) {
             NSLog(@"get token error: %@", tcs.task.error);
-            NSDictionary *m1 = @{
-                                 @"result": @"fail",
-                                 @"message": [@"get token error: " stringByAppendingString:tcs.task.error]
-                                 };
-            result(m1);
             return nil;
         } else {
             // 返回数据是json格式，需要解析得到token的各个字段
-            NSDictionary * object = [NSJSONSerialization JSONObjectWithData:tcs.task.result
+            
+            NSData *data=tcs.task.result;
+            
+            
+            if(![crypt_key isEqualToString:@""]){
+                NSDictionary * object = [NSJSONSerialization JSONObjectWithData:data
+                                                                        options:kNilOptions
+                                                                          error:nil];
+                JKEncrypt * en = [[JKEncrypt alloc]init];
+             data=[[en doDecEncryptStr:[object objectForKey:@"Data"] key:crypt_key] dataUsingEncoding:NSUTF8StringEncoding];
+            }
+            NSDictionary *ossobject = [NSJSONSerialization JSONObjectWithData: data
                                                                     options:kNilOptions
                                                                       error:nil];
-             JKEncrypt * en = [[JKEncrypt alloc]init];
-            NSString *data=[en doDecEncryptStr:[object objectForKey:@"Data"] key:crypt_key];
-           NSLog(@"get token data: %@", data);
-            NSDictionary *ossobject = [NSJSONSerialization JSONObjectWithData: [data dataUsingEncoding: NSUTF8StringEncoding]
-                                                                    options:kNilOptions
-                                                                      error:nil];
-            NSLog(@"get token data: %@", [ossobject objectForKey:@"AccessKeyId"]);
             OSSFederationToken * token = [OSSFederationToken new];
             token.tAccessKey = [ossobject objectForKey:@"AccessKeyId"];
             token.tSecretKey = [ossobject objectForKey:@"AccessKeySecret"];
@@ -91,28 +94,37 @@ OSSClient *oss ;
     }];
     oss = [[OSSClient alloc] initWithEndpoint:endpoint credentialProvider:credential1];
     NSDictionary *m1 = @{
-                         @"result": @"success"
+                         @"result": @"success",
+                         @"id":_id
                          };
-    result(m1);
+    [channel invokeMethod:@"onInit" arguments:m1];
 }
 - (void)update:(FlutterMethodCall*)call result:(FlutterResult)result {
+    NSString * _id = call.arguments[@"id"];
+    NSString * key = call.arguments[@"key"];
+    if (oss == nil) {
+        NSDictionary *m1 = @{
+                             @"result":  @"fail",
+                             @"id": _id,
+                             @"key":key,
+                             @"message":@"请先初始化"
+                             };
+        [channel invokeMethod:@"onUpload" arguments:m1];
+    } else {
       NSString *bucket = call.arguments[@"bucket"];
       NSString * file = call.arguments[@"file"];
-      NSString * key = call.arguments[@"key"];
-    
     OSSPutObjectRequest * put = [OSSPutObjectRequest new];
     // 必填字段
     put.bucketName = bucket;
     put.objectKey = key;
     put.uploadingFileURL = [NSURL fileURLWithPath:file];
     // put.uploadingData = <NSData *>; // 直接上传NSData
-    // 可选字段，可不设置
     put.uploadProgress = ^(int64_t bytesSent, int64_t totalByteSent, int64_t totalBytesExpectedToSend) {
         // 当前上传段长度、当前已经上传总长度、一共需要上传的总长度
-        NSLog(@"%lld, %lld, %lld", bytesSent, totalByteSent, totalBytesExpectedToSend);
         NSDictionary *m1 = @{
-                             @"currentSize":  [NSString stringWithFormat:@"%ll",totalByteSent],
-                             @"totalSize": [NSString stringWithFormat:@"%ll",totalBytesExpectedToSend]
+                             @"currentSize":  [NSString stringWithFormat:@"%lld",totalByteSent],
+                             @"totalSize": [NSString stringWithFormat:@"%lld",totalBytesExpectedToSend],
+                             @"id":_id
                              };
         [channel invokeMethod:@"onProgress" arguments:m1];
     };
@@ -126,17 +138,156 @@ OSSClient *oss ;
     OSSTask * putTask = [oss putObject:put];
     [putTask continueWithBlock:^id(OSSTask *task) {
         if (!task.error) {
-            NSLog(@"upload object success!");
+            NSDictionary *m1 = @{
+                                 @"result": @"success",
+                                 @"key":key,
+                                 @"id":_id
+                                 };
+            [channel invokeMethod:@"onUpload" arguments:m1];
         } else {
-            NSLog(@"upload object failed, error: %@" , task.error);
+            
+            NSDictionary *m1 = @{
+                                 @"result": @"fail",
+                                 @"key":key,
+                                 @"id":_id,
+                                 @"message":task.error
+                                 };
+            [channel invokeMethod:@"onUpload" arguments:m1];
         }
         return nil;
     }];
     // [putTask waitUntilFinished];
     // [put cancel];
-    NSDictionary *m1 = @{
-                         @"result": @"success"
-                         };
-    result(m1);
+    }
+}
+- (void)download:(FlutterMethodCall*)call result:(FlutterResult)result {
+    NSString * _id = call.arguments[@"id"];
+    NSString * key = call.arguments[@"key"];
+    if (oss == nil) {
+        NSDictionary *m1 = @{
+                             @"result":  @"fail",
+                             @"id": _id,
+                             @"key":key,
+                             @"message":@"请先初始化"
+                             };
+        [channel invokeMethod:@"onDownload" arguments:m1];
+    } else {
+        NSString * bucket = call.arguments[@"bucket"];
+        NSString * process = call.arguments[@"process"];
+        NSString * path = call.arguments[@"path"];
+        
+        OSSGetObjectRequest * request = [OSSGetObjectRequest new];
+        
+        // 必填字段
+        request.bucketName = bucket;
+        request.objectKey = key;
+        
+        // 可选字段
+        request.downloadProgress = ^(int64_t bytesWritten, int64_t totalBytesWritten, int64_t totalBytesExpectedToWrite) {
+            NSDictionary *m1 = @{
+                                 @"currentSize":  [NSString stringWithFormat:@"%lld",totalBytesWritten],
+                                 @"totalSize": [NSString stringWithFormat:@"%lld",totalBytesExpectedToWrite],
+                                 @"id":_id
+                                 };
+            [channel invokeMethod:@"onProgress" arguments:m1];
+        };
+        // request.range = [[OSSRange alloc] initWithStart:0 withEnd:99]; // bytes=0-99，指定范围下载
+        request.downloadToFileURL = [NSURL fileURLWithPath:path]; // 如果需要直接下载到文件，需要指明目标文件地址
+        if(![process isEqualToString:@""]){
+        request.xOssProcess=process;
+        }
+        OSSTask * getTask = [oss getObject:request];
+        [getTask continueWithBlock:^id(OSSTask *task) {
+            if (!task.error) {
+                NSDictionary *m1 = @{
+                                     @"result": @"success",
+                                     @"path":path,
+                                     @"id":_id
+                                     };
+                [channel invokeMethod:@"onDownload" arguments:m1];
+                
+            } else {
+                NSDictionary *m1 = @{
+                                     @"result": @"fail",
+                                     @"path":path,
+                                     @"message":task.error,
+                                     @"id":_id
+                                     };
+                [channel invokeMethod:@"onDownload" arguments:m1];
+            }
+            return nil;
+        }];
+    }
+}
+- (void)signUrl:(FlutterMethodCall*)call result:(FlutterResult)result {
+    NSString * _id = call.arguments[@"id"];
+    NSString * key = call.arguments[@"key"];
+    if (oss == nil) {
+        NSDictionary *m1 = @{
+                             @"result":  @"fail",
+                             @"id": _id,
+                             @"key":key,
+                             @"message":@"请先初始化"
+                             };
+        [channel invokeMethod:@"onSign" arguments:m1];
+    } else {
+        NSString * bucket = call.arguments[@"bucket"];
+        NSString * type = call.arguments[@"type"];
+        float interval = [call.arguments[@"interval"] floatValue];
+        if ([type isEqualToString:@"0"]) {
+           OSSTask *task = [oss presignPublicURLWithBucketName:bucket
+                                            withObjectKey:key];
+            NSDictionary *m1 =nil;
+            if (!task.error) {
+                m1= @{
+                                     @"result":  @"success",
+                                     @"id": _id,
+                                     @"url":task.result,
+                                     };
+            } else {
+                m1 = @{
+                                     @"result":  @"fail",
+                                     @"id": _id,
+                                     @"url":@"",
+                                     };
+            }
+            [channel invokeMethod:@"onSign" arguments:m1];
+        } else if ([type isEqualToString:@"1"]) {
+            OSSTask * task =  nil;
+            NSString * process = call.arguments[@"process"];
+            if([process isEqualToString:@""]){
+                task =  [oss presignConstrainURLWithBucketName:bucket withObjectKey:key withExpirationInterval:interval];
+            }else{
+          task =  [oss presignConstrainURLWithBucketName:bucket withObjectKey:key withExpirationInterval:interval withParameters:@{
+                                                                                                                             @"process":process
+                                                                                                                             }];
+            }
+            NSDictionary *m1 =nil;
+            if (!task.error) {
+                m1= @{
+                      @"result":  @"success",
+                      @"id": _id,
+                      @"url":task.result,
+                      };
+            } else {
+                m1 = @{
+                       @"result":  @"fail",
+                       @"id": _id,
+                       @"url":@"",
+                       };
+            }
+            
+            [channel invokeMethod:@"onSign" arguments:m1];
+        }else{
+            
+            NSDictionary *m1 = @{
+                                 @"result":  @"fail",
+                                 @"id": _id,
+                                 @"message":@"签名类型错误"
+                                 };
+            [channel invokeMethod:@"onSign" arguments:m1];
+        }
+        
+    }
 }
 @end

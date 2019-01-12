@@ -76,6 +76,8 @@ class AliOSSFlutter {
         if("success"==methodCall.arguments["result"]){
           res.success=true;
           res.url=methodCall.arguments["url"];
+        }else{
+          res.msg=methodCall.arguments["message"];
         }
         oss._responseSignController.add(res);
         break;
@@ -92,6 +94,8 @@ class AliOSSFlutter {
         if("success"==methodCall.arguments["result"]){
           res.success=true;
           res.key=methodCall.arguments["key"];
+        }else{
+          res.msg=methodCall.arguments["message"];
         }
         oss._responseUploadController.add(res);
         break;
@@ -100,6 +104,8 @@ class AliOSSFlutter {
         if("success"==methodCall.arguments["result"]){
           res.success=true;
           res.path=methodCall.arguments["path"];
+        }else{
+          res.msg=methodCall.arguments["message"];
         }
         oss._responseDownloadController.add(res);
         break;

@@ -13,17 +13,20 @@ class ProgressResponse {
 class SignResponse {
   bool success;
   String url;
-  SignResponse({this.success, this.url});
+  String msg;
+  SignResponse({this.success, this.url,this.msg});
 }
 class UploadResponse {
     bool success;
     String key;
-  UploadResponse({this.success, this.key});
+    String msg;
+  UploadResponse({this.success, this.key,this.msg});
 }
 class DownloadResponse {
     bool success;
     String path;
-  DownloadResponse({this.success, this.path});
+    String msg;
+  DownloadResponse({this.success, this.path,this.msg});
 }
 class DeleteResponse {
     bool success;

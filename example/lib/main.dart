@@ -33,7 +33,9 @@ class _MyAppState extends State<MyApp> {
           _msg="初始化成功";
         });
       }else{
+        setState(() {
         _msg="初始化失败";
+        });
       }
     });
     alioss.responseFromSign.listen((data){
@@ -42,7 +44,9 @@ class _MyAppState extends State<MyApp> {
           _msg="url 签名 ："+data.url;
         });
       }else{
+        setState(() {
         _msg="url 签名失败";
+        });
       }
     });
     alioss.responseFromUpload.listen((data) {
@@ -51,7 +55,9 @@ class _MyAppState extends State<MyApp> {
           _msg="上传成功 key:"+data.key;
         });
       }else{
+        setState(() {
         _msg="上传失败";
+        });
       }
     });
     alioss.responseFromDownload.listen((data) {
@@ -61,7 +67,9 @@ class _MyAppState extends State<MyApp> {
           _msg="下载成功："+_path;
         });
       }else{
+        setState(() {
         _msg="下载失败";
+        });
       }
     });
   }
