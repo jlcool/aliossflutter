@@ -20,7 +20,7 @@
 @implementation JKEncrypt
 
 //字符串
--(NSString *)doEncryptStr:(NSString *)originalStr{
+-(NSString *)doEncryptStr:(NSString *)originalStr key:(NSString *)key{
     
     //把string 转NSData
     NSData* data = [originalStr dataUsingEncoding:NSUTF8StringEncoding];
@@ -39,7 +39,7 @@
     bufferPtr = malloc( bufferPtrSize * sizeof(uint8_t));
     memset((void *)bufferPtr, 0x0, bufferPtrSize);
     
-    const void *vkey = (const void *) [gkey UTF8String];
+    const void *vkey = (const void *) [key UTF8String];
     //偏移量
     const void *vinitVec = (const void *) [gIv UTF8String];
     

@@ -9,18 +9,18 @@ OSSClient *oss ;
 
 @implementation AliossflutterPlugin
 + (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar>*)registrar {
-  channel = [FlutterMethodChannel
-      methodChannelWithName:@"aliossflutter"
-            binaryMessenger:[registrar messenger]];
-  AliossflutterPlugin* instance = [[AliossflutterPlugin alloc] init];
-  [registrar addMethodCallDelegate:instance channel:channel];
+    channel = [FlutterMethodChannel
+               methodChannelWithName:@"aliossflutter"
+               binaryMessenger:[registrar messenger]];
+    AliossflutterPlugin* instance = [[AliossflutterPlugin alloc] init];
+    [registrar addMethodCallDelegate:instance channel:channel];
 }
 
 - (void)handleMethodCall:(FlutterMethodCall*)call result:(FlutterResult)result {
     
-    if ([@"init" isEqualToString:call.method]) {         
-            [self init:call result:result];
-             return;
+    if ([@"init" isEqualToString:call.method]) {
+        [self init:call result:result];
+        return;
     }else if ([@"upload" isEqualToString:call.method]) {
         [self update:call result:result];
         return;
@@ -31,10 +31,16 @@ OSSClient *oss ;
     }else if ([@"signurl" isEqualToString:call.method]) {
         [self signUrl:call result:result];
         return;
+    }else if ([@"des" isEqualToString:call.method]) {
+        [self des:call result:result];
+        return;
+    }else if ([@"delete" isEqualToString:call.method]) {
+        [self delete:call result:result];
+        return;
     }else{
         result(FlutterMethodNotImplemented);
     }
-  
+    
 }
 - (void)init:(FlutterMethodCall*)call result:(FlutterResult)result {
     
@@ -78,17 +84,19 @@ OSSClient *oss ;
                                                                         options:kNilOptions
                                                                           error:nil];
                 JKEncrypt * en = [[JKEncrypt alloc]init];
-             data=[[en doDecEncryptStr:[object objectForKey:@"Data"] key:crypt_key] dataUsingEncoding:NSUTF8StringEncoding];
+                data=[[en doDecEncryptStr:[object objectForKey:@"Data"] key:crypt_key] dataUsingEncoding:NSUTF8StringEncoding];
+                NSLog(@"get token: %@", [object objectForKey:@"Data"]);
             }
+            
             NSDictionary *ossobject = [NSJSONSerialization JSONObjectWithData: data
-                                                                    options:kNilOptions
-                                                                      error:nil];
+                                                                      options:kNilOptions
+                                                                        error:nil];
             OSSFederationToken * token = [OSSFederationToken new];
             token.tAccessKey = [ossobject objectForKey:@"AccessKeyId"];
             token.tSecretKey = [ossobject objectForKey:@"AccessKeySecret"];
             token.tToken = [ossobject objectForKey:@"SecurityToken"];
             token.expirationTimeInGMTFormat = [ossobject objectForKey:@"Expiration"];
-            NSLog(@"get token: %@", token);
+            
             return token;
         }
     }];
@@ -111,53 +119,53 @@ OSSClient *oss ;
                              };
         [channel invokeMethod:@"onUpload" arguments:m1];
     } else {
-      NSString *bucket = call.arguments[@"bucket"];
-      NSString * file = call.arguments[@"file"];
-    OSSPutObjectRequest * put = [OSSPutObjectRequest new];
-    // 必填字段
-    put.bucketName = bucket;
-    put.objectKey = key;
-    put.uploadingFileURL = [NSURL fileURLWithPath:file];
-    // put.uploadingData = <NSData *>; // 直接上传NSData
-    put.uploadProgress = ^(int64_t bytesSent, int64_t totalByteSent, int64_t totalBytesExpectedToSend) {
-        // 当前上传段长度、当前已经上传总长度、一共需要上传的总长度
-        NSDictionary *m1 = @{
-                             @"currentSize":  [NSString stringWithFormat:@"%lld",totalByteSent],
-                             @"totalSize": [NSString stringWithFormat:@"%lld",totalBytesExpectedToSend],
-                             @"id":_id
-                             };
-        [channel invokeMethod:@"onProgress" arguments:m1];
-    };
-    
-    // 以下可选字段的含义参考： https://docs.aliyun.com/#/pub/oss/api-reference/object&PutObject
-    // put.contentType = @"";
-    // put.contentMd5 = @"";
-    // put.contentEncoding = @"";
-    // put.contentDisposition = @"";
-    // put.objectMeta = [NSMutableDictionary dictionaryWithObjectsAndKeys:@"value1", @"x-oss-meta-name1", nil]; // 可以在上传时设置元信息或者其他HTTP头部
-    OSSTask * putTask = [oss putObject:put];
-    [putTask continueWithBlock:^id(OSSTask *task) {
-        if (!task.error) {
+        NSString *bucket = call.arguments[@"bucket"];
+        NSString * file = call.arguments[@"file"];
+        OSSPutObjectRequest * put = [OSSPutObjectRequest new];
+        // 必填字段
+        put.bucketName = bucket;
+        put.objectKey = key;
+        put.uploadingFileURL = [NSURL fileURLWithPath:file];
+        // put.uploadingData = <NSData *>; // 直接上传NSData
+        put.uploadProgress = ^(int64_t bytesSent, int64_t totalByteSent, int64_t totalBytesExpectedToSend) {
+            // 当前上传段长度、当前已经上传总长度、一共需要上传的总长度
             NSDictionary *m1 = @{
-                                 @"result": @"success",
-                                 @"key":key,
+                                 @"currentSize":  [NSString stringWithFormat:@"%lld",totalByteSent],
+                                 @"totalSize": [NSString stringWithFormat:@"%lld",totalBytesExpectedToSend],
                                  @"id":_id
                                  };
-            [channel invokeMethod:@"onUpload" arguments:m1];
-        } else {
-            
-            NSDictionary *m1 = @{
-                                 @"result": @"fail",
-                                 @"key":key,
-                                 @"id":_id,
-                                 @"message":task.error
-                                 };
-            [channel invokeMethod:@"onUpload" arguments:m1];
-        }
-        return nil;
-    }];
-    // [putTask waitUntilFinished];
-    // [put cancel];
+            [channel invokeMethod:@"onProgress" arguments:m1];
+        };
+        
+        // 以下可选字段的含义参考： https://docs.aliyun.com/#/pub/oss/api-reference/object&PutObject
+        // put.contentType = @"";
+        // put.contentMd5 = @"";
+        // put.contentEncoding = @"";
+        // put.contentDisposition = @"";
+        // put.objectMeta = [NSMutableDictionary dictionaryWithObjectsAndKeys:@"value1", @"x-oss-meta-name1", nil]; // 可以在上传时设置元信息或者其他HTTP头部
+        OSSTask * putTask = [oss putObject:put];
+        [putTask continueWithBlock:^id(OSSTask *task) {
+            if (!task.error) {
+                NSDictionary *m1 = @{
+                                     @"result": @"success",
+                                     @"key":key,
+                                     @"id":_id
+                                     };
+                [channel invokeMethod:@"onUpload" arguments:m1];
+            } else {
+                
+                NSDictionary *m1 = @{
+                                     @"result": @"fail",
+                                     @"key":key,
+                                     @"id":_id,
+                                     @"message":task.error
+                                     };
+                [channel invokeMethod:@"onUpload" arguments:m1];
+            }
+            return nil;
+        }];
+        // [putTask waitUntilFinished];
+        // [put cancel];
     }
 }
 - (void)download:(FlutterMethodCall*)call result:(FlutterResult)result {
@@ -194,7 +202,7 @@ OSSClient *oss ;
         // request.range = [[OSSRange alloc] initWithStart:0 withEnd:99]; // bytes=0-99，指定范围下载
         request.downloadToFileURL = [NSURL fileURLWithPath:path]; // 如果需要直接下载到文件，需要指明目标文件地址
         if(![process isEqualToString:@""]){
-        request.xOssProcess=process;
+            request.xOssProcess=process;
         }
         OSSTask * getTask = [oss getObject:request];
         [getTask continueWithBlock:^id(OSSTask *task) {
@@ -235,21 +243,21 @@ OSSClient *oss ;
         NSString * type = call.arguments[@"type"];
         float interval = [call.arguments[@"interval"] floatValue];
         if ([type isEqualToString:@"0"]) {
-           OSSTask *task = [oss presignPublicURLWithBucketName:bucket
-                                            withObjectKey:key];
+            OSSTask *task = [oss presignPublicURLWithBucketName:bucket
+                                                  withObjectKey:key];
             NSDictionary *m1 =nil;
             if (!task.error) {
                 m1= @{
-                                     @"result":  @"success",
-                                     @"id": _id,
-                                     @"url":task.result,
-                                     };
+                      @"result":  @"success",
+                      @"id": _id,
+                      @"url":task.result,
+                      };
             } else {
                 m1 = @{
-                                     @"result":  @"fail",
-                                     @"id": _id,
-                                     @"url":@"",
-                                     };
+                       @"result":  @"fail",
+                       @"id": _id,
+                       @"url":@"",
+                       };
             }
             [channel invokeMethod:@"onSign" arguments:m1];
         } else if ([type isEqualToString:@"1"]) {
@@ -258,9 +266,9 @@ OSSClient *oss ;
             if([process isEqualToString:@""]){
                 task =  [oss presignConstrainURLWithBucketName:bucket withObjectKey:key withExpirationInterval:interval];
             }else{
-          task =  [oss presignConstrainURLWithBucketName:bucket withObjectKey:key withExpirationInterval:interval withParameters:@{
-                                                                                                                             @"process":process
-                                                                                                                             }];
+                task =  [oss presignConstrainURLWithBucketName:bucket withObjectKey:key withExpirationInterval:interval withParameters:@{
+                                                                                                                                         @"process":process
+                                                                                                                                         }];
             }
             NSDictionary *m1 =nil;
             if (!task.error) {
@@ -288,6 +296,58 @@ OSSClient *oss ;
             [channel invokeMethod:@"onSign" arguments:m1];
         }
         
+    }
+}
+- (void)des:(FlutterMethodCall*)call result:(FlutterResult)result {
+    NSString * _key = call.arguments[@"key"];
+    NSString * _type = call.arguments[@"type"];
+    NSString * _data = call.arguments[@"data"];
+    JKEncrypt * en = [[JKEncrypt alloc]init];
+    NSString *_res=@"";
+    if([_type isEqualToString:@"encrypt"]){
+        _res= [en doEncryptStr:_data key:_key];
+    }else if([_type isEqualToString:@"decrypt"]){
+        _res=[en doDecEncryptStr:_data key:_key];
+    }
+    result(_res);
+}
+- (void)delete:(FlutterMethodCall*)call result:(FlutterResult)result {
+    NSString * _id = call.arguments[@"id"];
+    NSString * key = call.arguments[@"key"];
+    if (oss == nil) {
+        NSDictionary *m1 = @{
+                             @"result":  @"fail",
+                             @"id": _id,
+                             @"key":key,
+                             @"message":@"请先初始化"
+                             };
+        [channel invokeMethod:@"onDelete" arguments:m1];
+    } else {
+        OSSDeleteObjectRequest * delete = [OSSDeleteObjectRequest new];
+        delete.bucketName =call.arguments[@"bucket"];
+        delete.objectKey = key;
+        
+        OSSTask * deleteTask = [oss deleteObject:delete];
+        
+        [deleteTask continueWithBlock:^id(OSSTask *task) {
+            NSDictionary *m1 =nil;
+            if (!task.error) {
+                m1= @{
+                      @"result":  @"success",
+                      @"id": _id,
+                      @"key":key,
+                      };
+            }else{
+                m1 = @{
+                       @"result":  @"fail",
+                       @"id": _id,
+                       @"key":key,
+                       @"message":@""
+                       };
+            }
+            [channel invokeMethod:@"onDelete" arguments:m1];
+            return nil;
+        }];
     }
 }
 @end

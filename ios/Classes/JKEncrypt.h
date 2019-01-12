@@ -12,7 +12,7 @@
 @interface JKEncrypt : NSObject
 
 /**字符串加密 */
--(NSString *)doEncryptStr:(NSString *)originalStr;
+-(NSString *)doEncryptStr:(NSString *)originalStr   key:(NSString *)key;
 /**字符串解密 */
 -(NSString*)doDecEncryptStr:(NSString *)encryptStr  key:(NSString *)key;
 /**十六进制解密 */
