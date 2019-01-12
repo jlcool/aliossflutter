@@ -24,12 +24,12 @@ public class SecretUtils {
      * @param src 源数据的字节数组
      * @return
      */
-    public static byte[] encryptMode(byte[] src) {
+    public static byte[] encryptMode(String src) {
         try {
             SecretKey deskey = new SecretKeySpec(build3DesKey(PASSWORD_CRYPT_KEY), Algorithm);    //生成密钥
             Cipher c1 = Cipher.getInstance(Algorithm);    //实例化负责加密/解密的Cipher工具类
             c1.init(Cipher.ENCRYPT_MODE, deskey);    //初始化为加密模式
-            return c1.doFinal(src);
+            return Base64.encode(c1.doFinal(src.getBytes("UTF-8")),Base64.DEFAULT);
         } catch (java.security.NoSuchAlgorithmException e1) {
             e1.printStackTrace();
         } catch (javax.crypto.NoSuchPaddingException e2) {

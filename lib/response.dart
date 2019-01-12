@@ -25,3 +25,8 @@ class DownloadResponse {
     String path;
   DownloadResponse({this.success, this.path});
 }
+class DeleteResponse {
+    bool success;
+    String key;
+  DeleteResponse({this.success,this.key});
+}

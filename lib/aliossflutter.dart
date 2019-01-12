@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:uuid/uuid.dart';
 
 class AliOSSFlutter {
-  static final MethodChannel _channel = MethodChannel('aliossflutter')
+    final MethodChannel _channel = MethodChannel('aliossflutter')
     ..setMethodCallHandler(_handler);
   static final _uuid = new Uuid();
   String id;
@@ -38,6 +38,10 @@ class AliOSSFlutter {
   StreamController<SignResponse> _responseSignController =
       new StreamController.broadcast();
   Stream<SignResponse> get responseFromSign => _responseSignController.stream;
+
+    StreamController<DeleteResponse> _responseDeleteController =
+      new StreamController.broadcast();
+  Stream<DeleteResponse> get responseFromDelete => _responseDeleteController.stream;
 
   Future<dynamic> _invokeMethod(String method,
       [Map<String, dynamic> arguments = const {}]) {
@@ -74,6 +78,14 @@ class AliOSSFlutter {
           res.url=methodCall.arguments["url"];
         }
         oss._responseSignController.add(res);
+        break;
+        case "onDelete":
+        DeleteResponse res=DeleteResponse(success: false);
+        if("success"==methodCall.arguments["result"]){
+          res.success=true;
+          res.key=methodCall.arguments["key"];
+        }
+        oss._responseDeleteController.add(res);
         break;
       case "onUpload":
         UploadResponse res=UploadResponse(success: false);
@@ -132,6 +144,21 @@ class AliOSSFlutter {
       "key": key,
       "path": path,
       "process": process
+    });
+  }
+  Future delete(String bucket, String key) async {
+    return await _invokeMethod('delete', <String, String>{
+      "bucket": bucket,
+      "key": key,
+    });
+  }
+//3des 加解密
+  Future des(String key, String type, String data,
+      ) async {
+    return await _invokeMethod('des', <String, String>{
+      "key": key,
+      "type": type,
+      "data": data
     });
   }
 }
