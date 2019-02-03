@@ -55,12 +55,12 @@ alioss.responseFromInit.listen((data){
 上传
 ```dart
 AliOSSFlutter  alioss=AliOSSFlutter();
-alioss.upload("bucket", file.path, "key");
+alioss.upload("bucket", file.path, "key",callbackBody: Config.callbackBody,callbackBodyType: Config.callbackBodyType,callbackHost: Config.callbackHost,callbackUrl: Config.callbackUrl,callbackVars: Config.callbackVars);
 //监听上传
 alioss.responseFromUpload.listen((data) {
       if(data.success) {
         setState(() {
-          _msg="上传成功 key:"+data.key;
+          _msg="上传成功 key:"+data.key+" 服务器回调返回值："+data.servercallback;
         });
       }else{
         _msg="上传失败";
