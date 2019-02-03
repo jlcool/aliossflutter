@@ -20,7 +20,8 @@ class UploadResponse {
     bool success;
     String key;
     String msg;
-  UploadResponse({this.success, this.key,this.msg});
+    String servercallback;
+  UploadResponse({this.success, this.key,this.msg,this.servercallback});
 }
 class DownloadResponse {
     bool success;

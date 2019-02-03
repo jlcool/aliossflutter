@@ -94,6 +94,7 @@ class AliOSSFlutter {
         if("success"==methodCall.arguments["result"]){
           res.success=true;
           res.key=methodCall.arguments["key"];
+          res.servercallback=methodCall.arguments["servercallback"];
         }else{
           res.msg=methodCall.arguments["message"];
         }
@@ -114,9 +115,9 @@ class AliOSSFlutter {
   }
 
 //上传
-  Future upload(String bucket, String file, String key) async {
+  Future upload(String bucket, String file, String key,{String callbackUrl,String callbackHost,String callbackBodyType,String callbackBody,String callbackVars}) async {
     return await _invokeMethod(
-        'upload', <String, String>{"bucket": bucket, "file": file, "key": key});
+        'upload', <String, String>{"bucket": bucket, "file": file, "key": key, "callbackUrl": callbackUrl, "callbackHost": callbackHost, "callbackBodyType": callbackBodyType, "callbackBody": callbackBody, "callbackVars": callbackVars});
   }
 
 //初始化

@@ -15,7 +15,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   String _msg="消息";
   double _progress=0;
-  String _rs="ym0KUqQ9A1Ln3G27IZAA+hUoa33AwdRjLoGDRclHFovMxLXH5yO1P4yUU7Fl0BpgKzhDQO9m6bNiwT94Hnjw/nTxAA4esjAMuBGNNpyVhLLhyLx//k7dueml//C1aG8/kadhIUYXdG7rrYd/wB20uKJpqPlpXJT24qTYVKGa4mAmx8JcJHm1Pdq2BFaPa1Bw4xEZVg/pcIM2M7bwBJ5gOn4QcwRYCLsgrmNqy0s7EEz1qhCEVy6OR+HgUgID1xH0upXRlbliT4w+YL2tbUJCX9jS1nE6aFH1xsh9GYQxGu8xR5t/E/CA2d7fx0ZL+bJwn1qXrow6feQQL6YAtQp3D5ibWtuDOUmfF0nDeH/cVL6sCqY4SKP01/ZPsVhhh+MTdH49n7Q2bIXpFFdBNcRosp9Me/c0NXo8lRhqlYh0tF5RCHIDbjpP37HSxXUSMuMxV9S+RfhmHf68NnajZ6ES+ro9XDo7wGSfzC/x+pMBV+gbtEhTqkOJZ96RDKeWKsPwKWEVHaDxOc1UyQqmgCEYOBFN3Ri/5Br7x4SaN7h3d8hHbU20gUG3tr08NNrsRgmV68L+r+nfyWKpyMV9ok73TKElCmDOUA5Cf3tzZGqhWv3oHbNnnt05zq9tkY7VUDdySdqKwl+wxZ4JpQODqhoAjdd6uq2Doxoe+OomDqm64ReqaMZg6NVKLKcSP5o3or1ZgfBxs26XN2eu8+uip4Liab5RjrOkFliV/LKZ5gYgCZ1AUCZ864CGc91xsqfjR20vxRVa5pcehCAE2CrgxAfX9zrdXhD++vbquerL9v3L8H1Z6Ka+RRaot24mD+D2WwqPd0fYi2cy/JmBeWSIxe3Rk8cLx1l43STPaR71jnh3wCO8uWacgGIq6lCYVQN4QiPS0Hl2DIWuMquPQGxQuc3sZQ==";
+  String _rs="";
   AliOSSFlutter alioss=AliOSSFlutter();
   String _path="";
   @override
@@ -53,11 +53,11 @@ class _MyAppState extends State<MyApp> {
     alioss.responseFromUpload.listen((data) {
       if(data.success) {
         setState(() {
-          _msg="上传成功 key:"+data.key;
+          _msg="上传成功 key:"+data.key+" 服务器返回值："+data.servercallback;
         });
       }else{
         setState(() {
-        _msg="上传失败";
+        _msg="上传失败"+data.msg;
         });
       }
     });
@@ -94,7 +94,7 @@ void _uploadPic() async{
     if (file == null) {
       return;
     }
-    alioss.upload(Config.bucket, file.path, Config.key);
+    alioss.upload(Config.bucket, file.path, Config.key,callbackBody: Config.callbackBody,callbackBodyType: Config.callbackBodyType,callbackHost: Config.callbackHost,callbackUrl: Config.callbackUrl,callbackVars: Config.callbackVars);
   }
   void _sign() async{
     alioss.signUrl(Config.bucket,Config.key,type:"1");

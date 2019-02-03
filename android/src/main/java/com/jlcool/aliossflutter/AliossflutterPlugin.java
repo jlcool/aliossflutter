@@ -26,6 +26,7 @@ import com.alibaba.sdk.android.oss.model.PutObjectRequest;
 import com.alibaba.sdk.android.oss.model.PutObjectResult;
 
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -158,41 +159,80 @@ public class AliossflutterPlugin implements MethodCallHandler {
     }
 
     private void upload(final MethodCall call) {
-        final String bucket = call.argument("bucket");
-        final String file = call.argument("file");
         final String key = call.argument("key");
         final String _id = call.argument("id");
-        PutObjectRequest put = new PutObjectRequest(bucket, key, file);
-        put.setProgressCallback(new OSSProgressCallback<PutObjectRequest>() {
-            @Override
-            public void onProgress(PutObjectRequest request, long currentSize, long totalSize) {
-                Log.d("onProgress", "currentSize: " + currentSize + " totalSize: " + totalSize);
-                Map<String, String> m1 = new HashMap<String, String>();
-                m1.put("currentSize", String.valueOf(currentSize));
-                m1.put("totalSize", String.valueOf(totalSize));
-                m1.put("id", _id);
-                channel.invokeMethod("onProgress", m1);
-            }
-        });
         if (oss == null) {
             Map<String, String> m1 = new HashMap();
             m1.put("result", "fail");
             m1.put("id", _id);
-			m1.put("key", key);
+            m1.put("key", key);
             m1.put("message", "请先初始化");
             channel.invokeMethod("onUpload", m1);
         } else {
+            final String bucket = call.argument("bucket");
+            final String file = call.argument("file");
+
+
+            final String _callbackUrl = call.argument("callbackUrl");
+            final String _callbackHost = call.argument("callbackHost");
+            final String _callbackBodyType = call.argument("callbackBodyType");
+            final String _callbackBody = call.argument("callbackBody");
+            final String _callbackVars = call.argument("callbackVars");
+            PutObjectRequest put = new PutObjectRequest(bucket, key, file);
+            put.setProgressCallback(new OSSProgressCallback<PutObjectRequest>() {
+                @Override
+                public void onProgress(PutObjectRequest request, long currentSize, long totalSize) {
+                    Log.d("onProgress", "currentSize: " + currentSize + " totalSize: " + totalSize);
+                    Map<String, String> m1 = new HashMap<String, String>();
+                    m1.put("currentSize", String.valueOf(currentSize));
+                    m1.put("totalSize", String.valueOf(totalSize));
+                    m1.put("id", _id);
+                    channel.invokeMethod("onProgress", m1);
+                }
+            });
+            if (_callbackUrl != "" && _callbackUrl != null) {
+
+                try {
+                    JSONObject jsonObjs = new JSONObject(_callbackVars);
+                    put.setCallbackParam(new HashMap<String, String>() {
+                        {
+                            put("callbackUrl", _callbackUrl);
+                            put("callbackHost", _callbackHost);
+                            put("callbackBodyType", _callbackBodyType);
+                            put("callbackBody", _callbackBody);
+                            //{"bucket":${bucket},"object":${object},"etag":${etag},"size":${size},"mimeType":${mimeType},"imageInfo.height":${imageInfo.height},"imageInfo.width":${imageInfo.width},"imageInfo.format":${imageInfo.format}}
+                        }
+                    });
+                    HashMap<String, String> _vars = new HashMap();
+                    for (int i = 0; i < jsonObjs.names().length(); i++) {
+                        _vars.put(jsonObjs.names().getString(i), jsonObjs.getString(jsonObjs.names().getString(i)));
+                    }
+                    put.setCallbackVars(_vars);
+                } catch (JSONException e) {
+                    Map<String, String> m1 = new HashMap();
+                    m1.put("result", "fail");
+                    m1.put("id", _id);
+                    m1.put("key", key);
+                    m1.put("message", "callbackVars 格式错误");
+                    channel.invokeMethod("onUpload", m1);
+                    return;
+                }
+
+            }
             OSSAsyncTask task = oss.asyncPutObject(put, new OSSCompletedCallback<PutObjectRequest, PutObjectResult>() {
                         @Override
                         public void onSuccess(PutObjectRequest request, PutObjectResult result) {
                             Log.d("onSuccess", "onSuccess");
                             Log.d("ETag", result.getETag());
                             Log.d("RequestId", result.getRequestId());
+
+                            String serverCallbackReturnJson = result.getServerCallbackReturnBody();
                             Map<String, String> m1 = new HashMap();
                             m1.put("result", "success");
                             m1.put("tag", result.getETag());
                             m1.put("id", _id);
                             m1.put("key", key);
+                            m1.put("servercallback", serverCallbackReturnJson);
                             m1.put("requestid", result.getRequestId());
                             channel.invokeMethod("onUpload", m1);
                         }
@@ -230,20 +270,20 @@ public class AliossflutterPlugin implements MethodCallHandler {
     }
 
     private void download(final MethodCall call) {
-		final String _key = call.argument("key");
-		final String _id = call.argument("id");
+        final String _key = call.argument("key");
+        final String _id = call.argument("id");
         if (oss == null) {
             Map<String, String> m1 = new HashMap();
             m1.put("result", "fail");
-			m1.put("id", _id);
+            m1.put("id", _id);
             m1.put("message", "请先初始化");
             channel.invokeMethod("onDownload", m1);
         } else {
 //      try {
             final String _bucket = call.argument("bucket");
-            
+
             String process = call.argument("process");
-            
+
             final String _path = call.argument("path");
             GetObjectRequest get = new GetObjectRequest(_bucket, _key);
             if (!"".equals(process)) {
@@ -330,6 +370,7 @@ public class AliossflutterPlugin implements MethodCallHandler {
             });
         }
     }
+
     //删除
     private void delete(final MethodCall call) {
         final String _key = call.argument("key");
@@ -386,24 +427,25 @@ public class AliossflutterPlugin implements MethodCallHandler {
 
             });
         }
-        }
+    }
+
     //签名url
     private void signUrl(final MethodCall call) {
-		final String _id = call.argument("id");
-		final String _key = call.argument("key");
+        final String _id = call.argument("id");
+        final String _key = call.argument("key");
         if (oss == null) {
             Map<String, String> m1 = new HashMap();
             m1.put("result", "fail");
-			m1.put("id", _id);
-			m1.put("_key", _key);
+            m1.put("id", _id);
+            m1.put("_key", _key);
             m1.put("message", "请先初始化");
             channel.invokeMethod("onSign", m1);
         } else {
 //      try {
             final String _bucket = call.argument("bucket");
-            
+
             final String _type = call.argument("type");
-            
+
             final Long _interval = Long.parseLong(call.argument("interval").toString());
             Map<String, String> m1 = new HashMap();
 
@@ -435,7 +477,7 @@ public class AliossflutterPlugin implements MethodCallHandler {
                         }
                     }
                 }).start();
-            }else{
+            } else {
                 m1.put("result", "fail");
                 m1.put("message", "签名类型错误");
                 m1.put("id", _id);
@@ -445,18 +487,19 @@ public class AliossflutterPlugin implements MethodCallHandler {
 
         }
     }
+
     //3des 加密
     private void des(final MethodCall call) {
         final String _key = call.argument("key");
         //encrypt or decrypt
         final String _type = call.argument("type");
-        final  String _data=call.argument("data");
+        final String _data = call.argument("data");
         SecretUtils.PASSWORD_CRYPT_KEY = _key;
         String _res = "";
-        if(_type.equals("encrypt")){
-            _res=new String(SecretUtils.encryptMode(_data));
-        }else if(_type.equals("decrypt")){
-            _res=new String(SecretUtils.decryptMode(_data));
+        if (_type.equals("encrypt")) {
+            _res = new String(SecretUtils.encryptMode(_data));
+        } else if (_type.equals("decrypt")) {
+            _res = new String(SecretUtils.decryptMode(_data));
         }
         _result.success(_res.replaceAll("\r|\n", ""));
     }
