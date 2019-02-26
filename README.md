@@ -8,6 +8,13 @@ class Config{
  static final String cryptkey="";
  static final String bucket="";
  static final String key="";
+///上传回调配置
+static final String callbackUrl="";
+ static final String callbackHost="";
+ ///支持 application/x-www-form-urlencoded 和application/json
+ static final String callbackBodyType="application/json";
+ static final String callbackBody="{\"j_bucket\":\${bucket},\"j_object\":\${object},\"j_etag\":\${etag},\"j_size\":\${size},\"j_mimeType\":\${mimeType},\"j_height\":\${imageInfo.height},\"j_width\":\${imageInfo.width},\"j_format\":\${imageInfo.format},\"j_memberId\":\${x:var1}}";
+ static final String callbackVars="{\"x:var1\":\"123\"}";
 }
  ```
 
@@ -48,12 +55,12 @@ alioss.responseFromInit.listen((data){
 上传
 ```dart
 AliOSSFlutter  alioss=AliOSSFlutter();
-alioss.upload("bucket", file.path, "key");
+alioss.upload("bucket", file.path, "key",callbackBody: Config.callbackBody,callbackBodyType: Config.callbackBodyType,callbackHost: Config.callbackHost,callbackUrl: Config.callbackUrl,callbackVars: Config.callbackVars);
 //监听上传
 alioss.responseFromUpload.listen((data) {
       if(data.success) {
         setState(() {
-          _msg="上传成功 key:"+data.key;
+          _msg="上传成功 key:"+data.key+" 服务器回调返回值："+data.servercallback;
         });
       }else{
         _msg="上传失败";
