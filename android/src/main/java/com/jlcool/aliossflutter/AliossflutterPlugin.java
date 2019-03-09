@@ -104,6 +104,7 @@ public class AliossflutterPlugin implements MethodCallHandler {
         endpoint = _call.argument("endpoint");
         final String stsServer = _call.argument("stsserver");
         final String crypt_key = _call.argument("cryptkey");
+        final String crypt_type = _call.argument("crypttype");
         final String _id = _call.argument("id");
         final OSSCredentialProvider credentialProvider = new OSSFederationCredentialProvider() {
             @Override
@@ -113,10 +114,11 @@ public class AliossflutterPlugin implements MethodCallHandler {
                     HttpURLConnection conn = (HttpURLConnection) stsUrl.openConnection();
                     InputStream input = conn.getInputStream();
                     String jsonText = IOUtils.readStreamAsString(input, OSSConstants.DEFAULT_CHARSET_NAME);
-
-                    if (!"".equals(crypt_key)) {
-                        JSONObject jsonObj = new JSONObject(jsonText);
-                        String dec = jsonObj.getString("Data");
+                    JSONObject jsonObj = new JSONObject(jsonText);
+                    String dec = jsonObj.getString("Data");
+                    if ("aes".equals(crypt_type)) {
+                        jsonText = AESCipher.aesDecryptString(dec,crypt_key);
+                    }else{
                         SecretUtils.PASSWORD_CRYPT_KEY = crypt_key;
                         jsonText = new String(SecretUtils.decryptMode(dec));
                     }
