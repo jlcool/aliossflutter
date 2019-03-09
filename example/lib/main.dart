@@ -87,7 +87,7 @@ class _MyAppState extends State<MyApp> {
   }
   void _init() async{
     //初始化
-    alioss.init(Config.stsserver,Config.endpoint,cryptkey: Config.cryptkey);
+    alioss.init(Config.stsserver,Config.endpoint,cryptkey: Config.cryptkey,crypttype: "aes");
   }
 void _uploadPic() async{
     var file = await ImagePicker.pickImage(source: ImageSource.gallery);

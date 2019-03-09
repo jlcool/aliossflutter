@@ -1,6 +1,7 @@
 #import "AliossflutterPlugin.h"
 #import <AliyunOSSiOS/OSSService.h>
 #import "JKEncrypt.h"
+#import "AESCipher.h"
 
 NSString *endpoint = @"";
 NSObject<FlutterPluginRegistrar> *registrar;
@@ -47,6 +48,7 @@ OSSClient *oss ;
     endpoint = call.arguments[@"endpoint"];
     NSString *stsServer =call.arguments[@"stsserver"];
     NSString *crypt_key =call.arguments[@"cryptkey"];
+    NSString *crypt_type =call.arguments[@"crypttype"];
     NSString *_id =call.arguments[@"id"];
     
     id<OSSCredentialProvider> credential1 = [[OSSFederationCredentialProvider alloc] initWithFederationTokenGetter:^OSSFederationToken * {
@@ -83,9 +85,15 @@ OSSClient *oss ;
                 NSDictionary * object = [NSJSONSerialization JSONObjectWithData:data
                                                                         options:kNilOptions
                                                                           error:nil];
-                JKEncrypt * en = [[JKEncrypt alloc]init];
-                data=[[en doDecEncryptStr:[object objectForKey:@"Data"] key:crypt_key] dataUsingEncoding:NSUTF8StringEncoding];
-                NSLog(@"get token: %@", [object objectForKey:@"Data"]);
+                if([crypt_type isEqualToString:@"aes"]){
+                    data=[aesDecryptString([object objectForKey:@"Data"],crypt_key) dataUsingEncoding:NSUTF8StringEncoding];
+                    NSLog(@"get token aes: %@", data);
+                }else{
+                    JKEncrypt * en = [[JKEncrypt alloc]init];
+                    data=[[en doDecEncryptStr:[object objectForKey:@"Data"] key:crypt_key] dataUsingEncoding:NSUTF8StringEncoding];
+                    NSLog(@"get token 3des: %@", data);
+                }
+                
             }
             
             NSDictionary *ossobject = [NSJSONSerialization JSONObjectWithData: data

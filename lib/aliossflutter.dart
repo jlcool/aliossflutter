@@ -121,11 +121,12 @@ class AliOSSFlutter {
   }
 
 //初始化
-  Future init(String stsserver, String endpoint, {String cryptkey = ""}) async {
+  Future init(String stsserver, String endpoint, {String cryptkey = "",String crypttype = "3des"}) async {
     return await _invokeMethod('init', <String, String>{
       "stsserver": stsserver,
       "endpoint": endpoint,
-      "cryptkey": cryptkey
+      "cryptkey": cryptkey,
+      "crypttype": crypttype
     });
   }
 
