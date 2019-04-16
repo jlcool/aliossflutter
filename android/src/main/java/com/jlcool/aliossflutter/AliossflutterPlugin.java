@@ -34,11 +34,19 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Handler;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
@@ -91,6 +99,9 @@ public class AliossflutterPlugin implements MethodCallHandler {
             case "des":
                 des(call);
                 break;
+            case "aes":
+                aes(call);
+                break;
             case "delete":
                 delete(call);
                 break;
@@ -115,12 +126,14 @@ public class AliossflutterPlugin implements MethodCallHandler {
                     InputStream input = conn.getInputStream();
                     String jsonText = IOUtils.readStreamAsString(input, OSSConstants.DEFAULT_CHARSET_NAME);
                     JSONObject jsonObj = new JSONObject(jsonText);
-                    String dec = jsonObj.getString("Data");
-                    if ("aes".equals(crypt_type)) {
-                        jsonText = AESCipher.aesDecryptString(dec,crypt_key);
-                    }else{
-                        SecretUtils.PASSWORD_CRYPT_KEY = crypt_key;
-                        jsonText = new String(SecretUtils.decryptMode(dec));
+                    if(!"".equals(crypt_key)&&crypt_key!=null) {
+                        String dec = jsonObj.getString("Data");
+                        if ("aes".equals(crypt_type)) {
+                            jsonText = AESCipher.aesDecryptString(dec, crypt_key);
+                        } else {
+                            SecretUtils.PASSWORD_CRYPT_KEY = crypt_key;
+                            jsonText = new String(SecretUtils.decryptMode(dec));
+                        }
                     }
                     JSONObject jsonObjs = new JSONObject(jsonText);
 //                    {
@@ -504,5 +517,27 @@ public class AliossflutterPlugin implements MethodCallHandler {
             _res = new String(SecretUtils.decryptMode(_data));
         }
         _result.success(_res.replaceAll("\r|\n", ""));
+    }
+
+    //aes 加密
+    private void aes(final MethodCall call) {
+        final String _key = call.argument("key");
+        //encrypt or decrypt
+        final String _type = call.argument("type");
+        final String _data = call.argument("data");
+        SecretUtils.PASSWORD_CRYPT_KEY = _key;
+        String _res = "";
+        try {
+            if (_type.equals("encrypt")) {
+
+                _res = new String(AESCipher.aesEncryptString(_data, _key));
+
+            } else if (_type.equals("decrypt")) {
+                _res = new String(AESCipher.aesDecryptString(_data, _key));
+            }
+        }catch (Exception ex){
+
+        }
+        _result.success(_res);
     }
 }
