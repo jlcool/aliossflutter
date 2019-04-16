@@ -3,12 +3,17 @@
 example里的配置文件自行添加配置
 ```dart
 class Config{
+///https://help.aliyun.com/document_detail/102082.html?spm=a2c4g.11186623.6.626.15695d26D8hGYE
  static final  String stsserver="";
+ ///https://help.aliyun.com/document_detail/31837.html?spm=a2c4g.11186623.6.573.2b6144fdkv167F
  static final String endpoint="";
+ ///这是对sts认证的token加密用的key
+ ///如果不加密这里不需要
  static final String cryptkey="";
  static final String bucket="";
  static final String key="";
 ///上传回调配置
+///参考 https://help.aliyun.com/document_detail/93985.html?spm=a2c4g.11186623.6.954.390a7c57VfH42B
 static final String callbackUrl="";
  static final String callbackHost="";
  ///支持 application/x-www-form-urlencoded 和application/json
