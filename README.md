@@ -2,7 +2,6 @@
 
 example里的配置文件自行添加配置
 ```dart
-class Config{
 ///https://help.aliyun.com/document_detail/102082.html?spm=a2c4g.11186623.6.626.15695d26D8hGYE
  static final  String stsserver="";
  ///https://help.aliyun.com/document_detail/31837.html?spm=a2c4g.11186623.6.573.2b6144fdkv167F
@@ -20,7 +19,6 @@ static final String callbackUrl="";
  static final String callbackBodyType="application/json";
  static final String callbackBody="{\"j_bucket\":\${bucket},\"j_object\":\${object},\"j_etag\":\${etag},\"j_size\":\${size},\"j_mimeType\":\${mimeType},\"j_height\":\${imageInfo.height},\"j_width\":\${imageInfo.width},\"j_format\":\${imageInfo.format},\"j_memberId\":\${x:var1}}";
  static final String callbackVars="{\"x:var1\":\"123\"}";
-}
  ```
 
 阿里云oss

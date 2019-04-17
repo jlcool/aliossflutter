@@ -1,9 +1,6 @@
-import 'package:aliossflutter_example/config.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
-import 'package:aliossflutter/aliossflutter.dart'   ;
-import 'package:image_picker/image_picker.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:aliossflutter/aliossflutter.dart';
 
 void main() => runApp(MyApp());
 
@@ -18,6 +15,20 @@ class _MyAppState extends State<MyApp> {
   String _rs="";
   AliOSSFlutter alioss=AliOSSFlutter();
   String _path="";
+
+    final  String stsserver="";
+    final String endpoint="";
+    final String cryptkey="";
+    final String bucket="";
+    final String key="aaa.jpg";
+    final String callbackUrl="";
+    final String callbackHost="";
+  ///支持 application/x-www-form-urlencoded 和application/json
+    final String callbackBodyType="application/json";
+    final String callbackBody="{\"j_bucket\":\${bucket},\"j_object\":\${object},\"j_etag\":\${etag},\"j_size\":\${size},\"j_mimeType\":\${mimeType},\"j_height\":\${imageInfo.height},\"j_width\":\${imageInfo.width},\"j_format\":\${imageInfo.format},\"j_memberId\":\${x:var1}}";
+    final String callbackVars="{\"x:var1\":\"123\"}";
+  
+  
   @override
   void initState() {
     super.initState();
@@ -87,21 +98,18 @@ class _MyAppState extends State<MyApp> {
   }
   void _init() async{
     //初始化
-    alioss.init(Config.stsserver,Config.endpoint,cryptkey: Config.cryptkey,crypttype: "aes");
+    alioss.init(stsserver,endpoint);//,cryptkey: cryptkey,crypttype: "aes"
   }
 void _uploadPic() async{
-    var file = await ImagePicker.pickImage(source: ImageSource.gallery);
-    if (file == null) {
-      return;
-    }
-    alioss.upload(Config.bucket, file.path, Config.key,callbackBody: Config.callbackBody,callbackBodyType: Config.callbackBodyType,callbackHost: Config.callbackHost,callbackUrl: Config.callbackUrl,callbackVars: Config.callbackVars);
+    String filePath="";
+    alioss.upload(bucket, filePath, key,callbackBody: callbackBody,callbackBodyType: callbackBodyType,callbackHost: callbackHost,callbackUrl: callbackUrl,callbackVars: callbackVars);
   }
   void _sign() async{
-    alioss.signUrl(Config.bucket,Config.key,type:"1");
+    alioss.signUrl(bucket,key,type:"1");
   }
 
   void _des() async{
-    alioss.des(Config.cryptkey,"encrypt","123").then((data){
+    alioss.des(cryptkey,"encrypt","123").then((data){
       setState(() {
         _rs=data;
         _msg="123加密后："+data;
@@ -109,18 +117,18 @@ void _uploadPic() async{
     });
   }
   void _des1() async{
-    alioss.des(Config.cryptkey,"decrypt",_rs).then((data){
+    alioss.des(cryptkey,"decrypt",_rs).then((data){
       setState(() {
         _msg=_rs+"解密后："+data;
         });
     });
   }
   void _delete() async{
-    alioss.delete(Config.bucket,Config.key);
+    alioss.delete(bucket,key);
   }
   void _download() async{
-    Directory _cacheDir = await getTemporaryDirectory();
-    alioss.download(Config.bucket, Config.key,_cacheDir.path+"/"+Config.key);
+    String downloadPath="";
+    alioss.download(bucket, key,downloadPath+"/"+key);
   }
 
   @override

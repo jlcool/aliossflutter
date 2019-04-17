@@ -169,4 +169,13 @@ class AliOSSFlutter {
       "data": data
     });
   }
+  //aes 加解密
+  Future aes(String key, String type, String data,
+      ) async {
+    return await _invokeMethod('aes', <String, String>{
+      "key": key,
+      "type": type,
+      "data": data
+    });
+  }
 }

@@ -1,8 +1,8 @@
 name: aliossflutter
 description: 阿里云oss
 version: 0.0.1
-author:
-homepage:
+author: jlcool <jiangliang.net@gmail.com>
+homepage: https://github.com/jlcool/aliossflutter
 
 environment:
   sdk: ">=2.0.0-dev.68.0 <3.0.0"
