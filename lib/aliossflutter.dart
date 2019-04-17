@@ -65,6 +65,7 @@ class AliOSSFlutter {
         break;
       case "onProgress":
         ProgressResponse res = new ProgressResponse(
+          key: methodCall.arguments["key"].toString(),
             currentSize:
                 double.parse(methodCall.arguments["currentSize"].toString()),
             totalSize:
@@ -79,25 +80,26 @@ class AliOSSFlutter {
         }else{
           res.msg=methodCall.arguments["message"];
         }
+        res.key=methodCall.arguments["key"].toString();
         oss._responseSignController.add(res);
         break;
         case "onDelete":
         DeleteResponse res=DeleteResponse(success: false);
         if("success"==methodCall.arguments["result"]){
           res.success=true;
-          res.key=methodCall.arguments["key"];
         }
+        res.key=methodCall.arguments["key"];
         oss._responseDeleteController.add(res);
         break;
       case "onUpload":
         UploadResponse res=UploadResponse(success: false);
         if("success"==methodCall.arguments["result"]){
           res.success=true;
-          res.key=methodCall.arguments["key"];
           res.servercallback=methodCall.arguments["servercallback"];
         }else{
           res.msg=methodCall.arguments["message"];
         }
+        res.key=methodCall.arguments["key"];
         oss._responseUploadController.add(res);
         break;
       case "onDownload":
@@ -108,6 +110,7 @@ class AliOSSFlutter {
         }else{
           res.msg=methodCall.arguments["message"];
         }
+        res.key=methodCall.arguments["key"].toString();
         oss._responseDownloadController.add(res);
         break;
     }

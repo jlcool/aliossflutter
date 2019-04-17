@@ -103,7 +103,6 @@ alioss.responseFromSign.listen((data){
       }
     });
 ```
-
  监听进度上传和下载共用
 ```dart
 alioss.responseFromProgress.listen((data){
@@ -113,6 +112,20 @@ alioss.responseFromProgress.listen((data){
 });
   ```
 
+判断文件是否存在
+```dart
+alioss.exist(bucket, key).then((exist) {
+      if (exist) {
+        _msg = "已存在";
+      } else if (!exist) {
+        _msg = "不存在";
+      }
+      setState(() {});
+    }).catchError((err) {
+      _msg = "错误：$err";
+      setState(() {});
+    });
+  ```
 写了个插件开发过程，可以参考下
 [插件开发方法](https://github.com/jlcool/aliossflutter/wiki/%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91%E6%B5%81%E7%A8%8B).
 

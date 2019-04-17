@@ -202,6 +202,7 @@ public class AliossflutterPlugin implements MethodCallHandler {
                 public void onProgress(PutObjectRequest request, long currentSize, long totalSize) {
                     Log.d("onProgress", "currentSize: " + currentSize + " totalSize: " + totalSize);
                     Map<String, String> m1 = new HashMap<String, String>();
+                    m1.put("key", key);
                     m1.put("currentSize", String.valueOf(currentSize));
                     m1.put("totalSize", String.valueOf(totalSize));
                     m1.put("id", _id);
@@ -294,6 +295,7 @@ public class AliossflutterPlugin implements MethodCallHandler {
             Map<String, String> m1 = new HashMap();
             m1.put("result", "fail");
             m1.put("id", _id);
+            m1.put("key", _key);
             m1.put("message", "请先初始化");
             channel.invokeMethod("onDownload", m1);
         } else {
@@ -311,9 +313,10 @@ public class AliossflutterPlugin implements MethodCallHandler {
             get.setProgressListener(new OSSProgressCallback<GetObjectRequest>() {
                 @Override
                 public void onProgress(GetObjectRequest request, long currentSize, long totalSize) {
-                    Map<String, Long> m1 = new HashMap<String, Long>();
+                    Map<String, Object> m1 = new HashMap();
                     m1.put("currentSize", currentSize);
                     m1.put("totalSize", totalSize);
+                    m1.put("key", _key);
                     channel.invokeMethod("onProgress", m1);
                 }
             });
@@ -334,6 +337,7 @@ public class AliossflutterPlugin implements MethodCallHandler {
                         m1.put("result", "success");
                         m1.put("id", _id);
                         m1.put("path", _path);
+                        m1.put("key", _key);
                         channel.invokeMethod("onDownload", m1);
                         _result.success(m1);
                         os.flush();
@@ -343,6 +347,7 @@ public class AliossflutterPlugin implements MethodCallHandler {
                         m1.put("result", "fail");
                         m1.put("id", _id);
                         m1.put("path", _path);
+                        m1.put("key", _key);
                         m1.put("message", e.getMessage());
                         channel.invokeMethod("onDownload", m1);
                         _result.success(m1);
@@ -366,6 +371,7 @@ public class AliossflutterPlugin implements MethodCallHandler {
                         m1.put("result", "fail");
                         m1.put("id", _id);
                         m1.put("path", _path);
+                        m1.put("key", _key);
                         m1.put("message", clientExcepion.getMessage());
                         channel.invokeMethod("onDownload", m1);
                         _result.success(m1);
@@ -380,6 +386,7 @@ public class AliossflutterPlugin implements MethodCallHandler {
                         m1.put("result", "fail");
                         m1.put("id", _id);
                         m1.put("path", _path);
+                        m1.put("key", _key);
                         m1.put("message", String.valueOf(serviceException.getStatusCode()));
                         channel.invokeMethod("onDownload", m1);
                         _result.success(m1);
@@ -470,6 +477,7 @@ public class AliossflutterPlugin implements MethodCallHandler {
             if ("0".equals(_type)) {
                 m1.put("result", "success");
                 m1.put("id", _id);
+                m1.put("key", _key);
                 m1.put("url", oss.presignPublicObjectURL(_bucket, _key));
                 channel.invokeMethod("onSign", m1);
                 _result.success(m1);
@@ -482,6 +490,7 @@ public class AliossflutterPlugin implements MethodCallHandler {
                             m1.put("result", "success");
                             String url = oss.presignConstrainedObjectURL(_bucket, _key, _interval);
                             m1.put("url", url);
+                            m1.put("key", _key);
                             m1.put("id", _id);
                             channel.invokeMethod("onSign", m1);
                             _result.success(m1);
@@ -489,6 +498,7 @@ public class AliossflutterPlugin implements MethodCallHandler {
                             Map<String, String> m1 = new HashMap();
                             m1.put("result", "fail");
                             m1.put("message", e.toString());
+                            m1.put("key", _key);
                             m1.put("id", _id);
                             channel.invokeMethod("onSign", m1);
                             _result.success(m1);
@@ -497,6 +507,7 @@ public class AliossflutterPlugin implements MethodCallHandler {
                 }).start();
             } else {
                 m1.put("result", "fail");
+                m1.put("key", _key);
                 m1.put("message", "签名类型错误");
                 m1.put("id", _id);
                 channel.invokeMethod("onSign", m1);

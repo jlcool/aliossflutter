@@ -1,9 +1,9 @@
 class ProgressResponse {
   final double currentSize;
-
+  final String key;
   final double totalSize;
 
-  ProgressResponse({this.currentSize, this.totalSize});
+  ProgressResponse({this.currentSize, this.totalSize,this.key});
 
   double getProgress() {
     // TODO: implement toString
@@ -13,8 +13,9 @@ class ProgressResponse {
 class SignResponse {
   bool success;
   String url;
+  String key;
   String msg;
-  SignResponse({this.success, this.url,this.msg});
+  SignResponse({this.success, this.url,this.msg,this.key});
 }
 class UploadResponse {
     bool success;
@@ -26,8 +27,9 @@ class UploadResponse {
 class DownloadResponse {
     bool success;
     String path;
+    String key;
     String msg;
-  DownloadResponse({this.success, this.path,this.msg});
+  DownloadResponse({this.success, this.path,this.msg,this.key});
 }
 class DeleteResponse {
     bool success;
