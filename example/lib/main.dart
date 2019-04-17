@@ -35,10 +35,12 @@ class _MyAppState extends State<MyApp> {
     super.initState();
 
     alioss.responseFromProgress.listen((data) {
-      print("_progress:" + data.getProgress().toString());
-      setState(() {
-        _progress = data.getProgress();
-      });
+      if(data.key==key) {
+        print("_progress:" + data.getProgress().toString());
+        setState(() {
+          _progress = data.getProgress();
+        });
+      }
     });
     alioss.responseFromInit.listen((data) {
       if (data) {

@@ -106,9 +106,11 @@ alioss.responseFromSign.listen((data){
  监听进度上传和下载共用
 ```dart
 alioss.responseFromProgress.listen((data){
+if(data.key==key) {
  setState(() {
   _progress=data.getProgress();
  });
+ }
 });
   ```
 
