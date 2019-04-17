@@ -38,10 +38,12 @@ OSSClient *oss ;
     }else if ([@"delete" isEqualToString:call.method]) {
         [self delete:call result:result];
         return;
-    }else{
+    }else if ([@"doesObjectExist" isEqualToString:call.method]) {
+        [self doesObjectExist:call result:result];
+        return;
+    }else {
         result(FlutterMethodNotImplemented);
     }
-    
 }
 - (void)init:(FlutterMethodCall*)call result:(FlutterResult)result {
     
@@ -93,7 +95,6 @@ OSSClient *oss ;
                     data=[[en doDecEncryptStr:[object objectForKey:@"Data"] key:crypt_key] dataUsingEncoding:NSUTF8StringEncoding];
                     NSLog(@"get token 3des: %@", data);
                 }
-                
             }
             
             NSDictionary *ossobject = [NSJSONSerialization JSONObjectWithData: data
@@ -356,6 +357,30 @@ OSSClient *oss ;
             [channel invokeMethod:@"onDelete" arguments:m1];
             return nil;
         }];
+    }
+}
+
+- (void)doesObjectExist:(FlutterMethodCall*)call result:(FlutterResult)result {
+    NSString * key = call.arguments[@"key"];
+    NSString * bucket =call.arguments[@"bucket"];
+    if (oss == nil) {
+        result([FlutterError errorWithCode:@"err"
+                                   message:@"请先初始化"
+                                   details:nil]);
+    } else {
+        NSError * error = nil;
+        BOOL isExist = [oss doesObjectExistInBucket:bucket objectKey:key error:&error];
+        if (!error) {
+            if(isExist) {
+                result([NSNumber numberWithBool:true]);
+            } else {
+                result([NSNumber numberWithBool:false]);
+            }
+        } else {
+            result([FlutterError errorWithCode:@"err"
+                                       message:@"发生错误"
+                                       details:nil]);
+        }
     }
 }
 @end

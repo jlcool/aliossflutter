@@ -6,4 +6,5 @@
 - (void)update:(FlutterMethodCall *)call result:(FlutterResult)result;
 - (void)download:(FlutterMethodCall *)call result:(FlutterResult)result;
 - (void)signUrl:(FlutterMethodCall *)call result:(FlutterResult)result;
+- (void)doesObjectExist:(FlutterMethodCall *)call result:(FlutterResult)result;
 @end

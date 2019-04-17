@@ -1,7 +1,8 @@
 // This is a generated file; do not edit or check into version control.
-FLUTTER_ROOT=F:\flutter
-FLUTTER_APPLICATION_PATH=D:\Documents\flutterProject\aliossflutter\aliossflutter\example
-FLUTTER_TARGET=lib/main.dart
+FLUTTER_ROOT=/Users/jiangliang/development/flutter
+FLUTTER_APPLICATION_PATH=/Users/jiangliang/flutterproject/aliossflutter/example
+FLUTTER_TARGET=/Users/jiangliang/flutterproject/aliossflutter/example/lib/main.dart
 FLUTTER_BUILD_DIR=build
-SYMROOT=${SOURCE_ROOT}/../build\ios
-FLUTTER_FRAMEWORK_DIR=F:\flutter\bin\cache\artifacts\engine\ios
+SYMROOT=${SOURCE_ROOT}/../build/ios
+FLUTTER_FRAMEWORK_DIR=/Users/jiangliang/development/flutter/bin/cache/artifacts/engine/ios
+TRACK_WIDGET_CREATION=true

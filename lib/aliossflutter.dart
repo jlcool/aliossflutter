@@ -154,6 +154,13 @@ class AliOSSFlutter {
       "process": process
     });
   }
+
+  Future exist(String bucket, String key) async {
+    return await _invokeMethod('doesObjectExist', <String, String>{
+      "bucket": bucket,
+      "key": key
+    });
+  }
   Future delete(String bucket, String key) async {
     return await _invokeMethod('delete', <String, String>{
       "bucket": bucket,

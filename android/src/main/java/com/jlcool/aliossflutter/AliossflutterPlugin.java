@@ -105,6 +105,9 @@ public class AliossflutterPlugin implements MethodCallHandler {
             case "delete":
                 delete(call);
                 break;
+            case "doesObjectExist":
+                doesObjectExist(call);
+                break;
             default:
                 result.notImplemented();
                 break;
@@ -500,6 +503,31 @@ public class AliossflutterPlugin implements MethodCallHandler {
                 _result.success(m1);
             }
 
+        }
+    }
+
+
+    private void doesObjectExist(final MethodCall call) {
+        final String _key = call.argument("key");
+        final String _bucket = call.argument("bucket");
+        if (oss == null) {
+            _result.error("err", "请先初始化", null);
+        } else {
+            try {
+                if (oss.doesObjectExist(_bucket, _key)) {
+                    _result.success(true);
+                } else {
+                    _result.success(false);
+                }
+            } catch (ClientException e) {
+                _result.error("err", e.getMessage(), null);
+            } catch (ServiceException e) {
+                Log.e("ErrorCode", e.getErrorCode());
+                Log.e("RequestId", e.getRequestId());
+                Log.e("HostId", e.getHostId());
+                Log.e("RawMessage", e.getRawMessage());
+                _result.error("err", e.getMessage(), null);
+            }
         }
     }
 
