@@ -38,10 +38,12 @@ OSSClient *oss ;
     }else if ([@"delete" isEqualToString:call.method]) {
         [self delete:call result:result];
         return;
-    }else{
+    }else if ([@"doesObjectExist" isEqualToString:call.method]) {
+        [self doesObjectExist:call result:result];
+        return;
+    }else {
         result(FlutterMethodNotImplemented);
     }
-    
 }
 - (void)init:(FlutterMethodCall*)call result:(FlutterResult)result {
     
@@ -93,7 +95,6 @@ OSSClient *oss ;
                     data=[[en doDecEncryptStr:[object objectForKey:@"Data"] key:crypt_key] dataUsingEncoding:NSUTF8StringEncoding];
                     NSLog(@"get token 3des: %@", data);
                 }
-                
             }
             
             NSDictionary *ossobject = [NSJSONSerialization JSONObjectWithData: data
@@ -138,6 +139,7 @@ OSSClient *oss ;
         put.uploadProgress = ^(int64_t bytesSent, int64_t totalByteSent, int64_t totalBytesExpectedToSend) {
             // 当前上传段长度、当前已经上传总长度、一共需要上传的总长度
             NSDictionary *m1 = @{
+                                 @"key":key,
                                  @"currentSize":  [NSString stringWithFormat:@"%lld",totalByteSent],
                                  @"totalSize": [NSString stringWithFormat:@"%lld",totalBytesExpectedToSend],
                                  @"id":_id
@@ -201,6 +203,7 @@ OSSClient *oss ;
         // 可选字段
         request.downloadProgress = ^(int64_t bytesWritten, int64_t totalBytesWritten, int64_t totalBytesExpectedToWrite) {
             NSDictionary *m1 = @{
+                                 @"key":key,
                                  @"currentSize":  [NSString stringWithFormat:@"%lld",totalBytesWritten],
                                  @"totalSize": [NSString stringWithFormat:@"%lld",totalBytesExpectedToWrite],
                                  @"id":_id
@@ -218,6 +221,7 @@ OSSClient *oss ;
                 NSDictionary *m1 = @{
                                      @"result": @"success",
                                      @"path":path,
+                                     @"key":key,
                                      @"id":_id
                                      };
                 [channel invokeMethod:@"onDownload" arguments:m1];
@@ -226,6 +230,7 @@ OSSClient *oss ;
                 NSDictionary *m1 = @{
                                      @"result": @"fail",
                                      @"path":path,
+                                     @"key":key,
                                      @"message":task.error,
                                      @"id":_id
                                      };
@@ -258,12 +263,14 @@ OSSClient *oss ;
                 m1= @{
                       @"result":  @"success",
                       @"id": _id,
+                      @"key":key,
                       @"url":task.result,
                       };
             } else {
                 m1 = @{
                        @"result":  @"fail",
                        @"id": _id,
+                       @"key":key,
                        @"url":@"",
                        };
             }
@@ -283,12 +290,14 @@ OSSClient *oss ;
                 m1= @{
                       @"result":  @"success",
                       @"id": _id,
+                      @"key":key,
                       @"url":task.result,
                       };
             } else {
                 m1 = @{
                        @"result":  @"fail",
                        @"id": _id,
+                       @"key":key,
                        @"url":@"",
                        };
             }
@@ -299,6 +308,7 @@ OSSClient *oss ;
             NSDictionary *m1 = @{
                                  @"result":  @"fail",
                                  @"id": _id,
+                                 @"key":key,
                                  @"message":@"签名类型错误"
                                  };
             [channel invokeMethod:@"onSign" arguments:m1];
@@ -356,6 +366,30 @@ OSSClient *oss ;
             [channel invokeMethod:@"onDelete" arguments:m1];
             return nil;
         }];
+    }
+}
+
+- (void)doesObjectExist:(FlutterMethodCall*)call result:(FlutterResult)result {
+    NSString * key = call.arguments[@"key"];
+    NSString * bucket =call.arguments[@"bucket"];
+    if (oss == nil) {
+        result([FlutterError errorWithCode:@"err"
+                                   message:@"请先初始化"
+                                   details:nil]);
+    } else {
+        NSError * error = nil;
+        BOOL isExist = [oss doesObjectExistInBucket:bucket objectKey:key error:&error];
+        if (!error) {
+            if(isExist) {
+                result([NSNumber numberWithBool:true]);
+            } else {
+                result([NSNumber numberWithBool:false]);
+            }
+        } else {
+            result([FlutterError errorWithCode:@"err"
+                                       message:@"发生错误"
+                                       details:nil]);
+        }
     }
 }
 @end
