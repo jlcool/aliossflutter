@@ -13,9 +13,11 @@ import com.alibaba.sdk.android.oss.common.OSSConstants;
 import com.alibaba.sdk.android.oss.common.OSSLog;
 import com.alibaba.sdk.android.oss.common.auth.OSSAuthCredentialsProvider;
 import com.alibaba.sdk.android.oss.common.auth.OSSCredentialProvider;
+import com.alibaba.sdk.android.oss.common.auth.OSSCustomSignerCredentialProvider;
 import com.alibaba.sdk.android.oss.common.auth.OSSFederationCredentialProvider;
 import com.alibaba.sdk.android.oss.common.auth.OSSFederationToken;
 import com.alibaba.sdk.android.oss.common.utils.IOUtils;
+import com.alibaba.sdk.android.oss.common.utils.OSSUtils;
 import com.alibaba.sdk.android.oss.internal.OSSAsyncTask;
 import com.alibaba.sdk.android.oss.model.DeleteObjectRequest;
 import com.alibaba.sdk.android.oss.model.DeleteObjectResult;
@@ -92,6 +94,8 @@ public class AliossflutterPlugin implements MethodCallHandler {
                 break;
             case "init":
                 init();
+            case "secretInit":
+                secretInit();
                 break;
             case "signurl":
                 signUrl(call);
@@ -114,6 +118,34 @@ public class AliossflutterPlugin implements MethodCallHandler {
         }
     }
 
+    private void secretInit() {
+        endpoint = _call.argument("endpoint");
+        final String accessKeyId = _call.argument("accessKeyId");
+        final String accessKeySecret = _call.argument("accessKeySecret");
+        final String _id = _call.argument("id");
+        final OSSCustomSignerCredentialProvider credentialProvider = new OSSCustomSignerCredentialProvider() {
+            @Override
+            public String signContent(String content) {
+                // 您需要在这里依照OSS规定的签名算法，实现加签一串字符内容，并把得到的签名传拼接上AccessKeyId后返回
+                // 一般实现是，将字符内容post到您的业务服务器，然后返回签名
+                // 如果因为某种原因加签失败，描述error信息后，返回nil
+
+                // 以下是用本地算法进行的演示
+                return OSSUtils.sign(accessKeyId, accessKeySecret, content);
+            }
+        };
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                oss = new OSSClient(registrar.context(), endpoint, credentialProvider);
+                Map<String, String> m1 = new HashMap();
+                m1.put("result", "success");
+                m1.put("id", _id);
+                channel.invokeMethod("onInit", m1);
+            }
+        }).start();
+    }
+
     private void init() {
         endpoint = _call.argument("endpoint");
         final String stsServer = _call.argument("stsserver");
@@ -129,7 +161,7 @@ public class AliossflutterPlugin implements MethodCallHandler {
                     InputStream input = conn.getInputStream();
                     String jsonText = IOUtils.readStreamAsString(input, OSSConstants.DEFAULT_CHARSET_NAME);
                     JSONObject jsonObj = new JSONObject(jsonText);
-                    if(!"".equals(crypt_key)&&crypt_key!=null) {
+                    if (!"".equals(crypt_key) && crypt_key != null) {
                         String dec = jsonObj.getString("Data");
                         if ("aes".equals(crypt_type)) {
                             jsonText = AESCipher.aesDecryptString(dec, crypt_key);
@@ -574,7 +606,7 @@ public class AliossflutterPlugin implements MethodCallHandler {
             } else if (_type.equals("decrypt")) {
                 _res = new String(AESCipher.aesDecryptString(_data, _key));
             }
-        }catch (Exception ex){
+        } catch (Exception ex) {
 
         }
         _result.success(_res);

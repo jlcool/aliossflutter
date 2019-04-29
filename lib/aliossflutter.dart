@@ -133,6 +133,14 @@ class AliOSSFlutter {
     });
   }
 
+  Future secretInit(String accessKeyId,String accessKeySecret, String endpoint) async {
+    return await _invokeMethod('secretInit', <String, String>{
+      "endpoint": endpoint,
+      "accessKeyId": accessKeyId,
+      "accessKeySecret": accessKeySecret
+    });
+  }
+
 //url签名
   Future signUrl(String bucket, String key,
       {String type = "0",
