@@ -43,6 +43,10 @@ class AliOSSFlutter {
       new StreamController.broadcast();
   Stream<DeleteResponse> get responseFromDelete => _responseDeleteController.stream;
 
+    StreamController<HeadObjectResponse> _responseHeadObjectController =
+    new StreamController.broadcast();
+    Stream<HeadObjectResponse> get responseFromHeadObject => _responseHeadObjectController.stream;
+
   Future<dynamic> _invokeMethod(String method,
       [Map<String, dynamic> arguments = const {}]) {
     Map<String, dynamic> withId = Map.of(arguments);
@@ -113,6 +117,15 @@ class AliOSSFlutter {
         res.key=methodCall.arguments["key"].toString();
         oss._responseDownloadController.add(res);
         break;
+        case "asyncHeadObject":
+          HeadObjectResponse res=HeadObjectResponse(success: false);
+      if(methodCall.arguments["result"]){
+        res.success=true;
+      }
+      res.key=methodCall.arguments["key"];
+      res.lastModified=methodCall.arguments["lastModified"];
+      oss._responseHeadObjectController.add(res);
+      break;
     }
     return Future.value(true);
   }
@@ -194,6 +207,14 @@ class AliOSSFlutter {
       "key": key,
       "type": type,
       "data": data
+    });
+  }
+
+  //获取文件元信息
+  Future asyncHeadObject(String bucket, String key) async {
+    return await _invokeMethod('asyncHeadObject', <String, String>{
+      "bucket": bucket,
+      "key": key
     });
   }
 }

@@ -36,3 +36,9 @@ class DeleteResponse {
     String key;
   DeleteResponse({this.success,this.key});
 }
+class HeadObjectResponse {
+  bool success;
+  int lastModified;
+  String key;
+  HeadObjectResponse({this.success,this.lastModified,this.key});
+}

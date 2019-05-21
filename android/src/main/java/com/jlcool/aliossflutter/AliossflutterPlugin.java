@@ -24,6 +24,8 @@ import com.alibaba.sdk.android.oss.model.DeleteObjectResult;
 import com.alibaba.sdk.android.oss.model.GeneratePresignedUrlRequest;
 import com.alibaba.sdk.android.oss.model.GetObjectRequest;
 import com.alibaba.sdk.android.oss.model.GetObjectResult;
+import com.alibaba.sdk.android.oss.model.HeadObjectRequest;
+import com.alibaba.sdk.android.oss.model.HeadObjectResult;
 import com.alibaba.sdk.android.oss.model.PutObjectRequest;
 import com.alibaba.sdk.android.oss.model.PutObjectResult;
 
@@ -112,6 +114,9 @@ public class AliossflutterPlugin implements MethodCallHandler {
             case "doesObjectExist":
                 doesObjectExist(call);
                 break;
+            case "asyncHeadObject":
+                asyncHeadObject(call);
+                break;
             default:
                 result.notImplemented();
                 break;
@@ -134,16 +139,52 @@ public class AliossflutterPlugin implements MethodCallHandler {
                 return OSSUtils.sign(accessKeyId, accessKeySecret, content);
             }
         };
-        new Thread(new Runnable() {
+        oss = new OSSClient(registrar.context(), endpoint, credentialProvider);
+        Map<String, String> m1 = new HashMap();
+        m1.put("result", "success");
+        m1.put("id", _id);
+        channel.invokeMethod("onInit", m1);
+    }
+
+    private void asyncHeadObject(final MethodCall call){
+        final String bucket = call.argument("bucket");
+        final String key = call.argument("key");
+        final String _id = call.argument("id");
+
+        // 创建同步获取文件元信息请求。
+        HeadObjectRequest head = new HeadObjectRequest(bucket, key);
+
+// 获取文件元信息。
+        oss.asyncHeadObject(head, new OSSCompletedCallback<HeadObjectRequest, HeadObjectResult>() {
             @Override
-            public void run() {
-                oss = new OSSClient(registrar.context(), endpoint, credentialProvider);
-                Map<String, String> m1 = new HashMap();
-                m1.put("result", "success");
+            public void onSuccess(HeadObjectRequest request, HeadObjectResult result) {
+                Map<String, Object> m1 = new HashMap();
+                m1.put("key", key);
+                m1.put("result",true);
+                m1.put("lastModified",result.getMetadata().getLastModified().getTime());
                 m1.put("id", _id);
-                channel.invokeMethod("onInit", m1);
+                channel.invokeMethod("onHeadObject", m1);
             }
-        }).start();
+
+            @Override
+            public void onFailure(HeadObjectRequest request, ClientException clientExcepion, ServiceException serviceException) {
+                // 请求异常。
+                if (clientExcepion != null) {
+                    // 本地异常，如网络异常等。
+                    clientExcepion.printStackTrace();
+                }
+                if (serviceException != null) {
+
+                }
+                // 服务异常。
+                Map<String, Object> m1 = new HashMap();
+                m1.put("key", key);
+                m1.put("result", false);
+                m1.put("lastModified",0);
+                m1.put("id", _id);
+                channel.invokeMethod("onHeadObject", m1);
+            }
+        });
     }
 
     private void init() {
