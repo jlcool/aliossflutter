@@ -135,19 +135,14 @@ public class AliossflutterPlugin implements MethodCallHandler {
         m1.put("result", "success");
         m1.put("id", _id);
 
-        new Thread(new Runnable() {
+        final OSSCustomSignerCredentialProvider credentialProvider = new OSSCustomSignerCredentialProvider() {
             @Override
-            public void run() {
-                final OSSCustomSignerCredentialProvider credentialProvider = new OSSCustomSignerCredentialProvider() {
-                    @Override
-                    public String signContent(String content) {
-                        return OSSUtils.sign(accessKeyId, accessKeySecret, content);
-                    }
-                };
-                oss = new OSSClient(registrar.context(), endpoint, credentialProvider);
-                channel.invokeMethod("onInit", m1);
+            public String signContent(String content) {
+                return OSSUtils.sign(accessKeyId, accessKeySecret, content);
             }
-        }).start();
+        };
+        oss = new OSSClient(registrar.context(), endpoint, credentialProvider);
+        channel.invokeMethod("onInit", m1);
     }
 
     private void asyncHeadObject(final MethodCall call){
