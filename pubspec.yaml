@@ -1,11 +1,12 @@
 name: aliossflutter
 description: 阿里云oss
-version: 0.0.3
+version: 0.0.4
 author: jlcool <jiangliang.net@gmail.com>
 homepage: https://github.com/jlcool/aliossflutter
 
 environment:
   sdk: ">=2.0.0-dev.68.0 <3.0.0"
+  flutter: ">=1.5.9-pre.94 <2.0.0"
 
 dependencies:
   uuid: ^2.0.0

@@ -1,5 +1,6 @@
 package com.jlcool.aliossflutter;
 
+import android.app.Activity;
 import android.util.Log;
 
 import com.alibaba.sdk.android.oss.ClientConfiguration;
@@ -64,14 +65,16 @@ import io.flutter.plugin.common.PluginRegistry.Registrar;
 public class AliossflutterPlugin implements MethodCallHandler {
     String endpoint;
     static Registrar registrar;
+    private final Activity activity;
 
     static MethodChannel channel;
     Result _result;
     MethodCall _call;
     private static OSS oss;
 
-    private AliossflutterPlugin(Registrar registrar) {
+    private AliossflutterPlugin(Registrar registrar, Activity activity) {
         this.registrar = registrar;
+        this.activity=activity;
     }
 
     /**
@@ -79,9 +82,8 @@ public class AliossflutterPlugin implements MethodCallHandler {
      */
     public static void registerWith(Registrar registrar) {
         channel = new MethodChannel(registrar.messenger(), "aliossflutter");
-        channel.setMethodCallHandler(new AliossflutterPlugin(registrar));
+        channel.setMethodCallHandler(new AliossflutterPlugin(registrar, registrar.activity()));
     }
-
     @Override
     public void onMethodCall(MethodCall call, Result result) {
         _result = result;
@@ -128,22 +130,24 @@ public class AliossflutterPlugin implements MethodCallHandler {
         final String accessKeyId = _call.argument("accessKeyId");
         final String accessKeySecret = _call.argument("accessKeySecret");
         final String _id = _call.argument("id");
-        final OSSCustomSignerCredentialProvider credentialProvider = new OSSCustomSignerCredentialProvider() {
-            @Override
-            public String signContent(String content) {
-                // 您需要在这里依照OSS规定的签名算法，实现加签一串字符内容，并把得到的签名传拼接上AccessKeyId后返回
-                // 一般实现是，将字符内容post到您的业务服务器，然后返回签名
-                // 如果因为某种原因加签失败，描述error信息后，返回nil
 
-                // 以下是用本地算法进行的演示
-                return OSSUtils.sign(accessKeyId, accessKeySecret, content);
-            }
-        };
-        oss = new OSSClient(registrar.context(), endpoint, credentialProvider);
-        Map<String, String> m1 = new HashMap();
+        final Map<String, String> m1 = new HashMap();
         m1.put("result", "success");
         m1.put("id", _id);
-        channel.invokeMethod("onInit", m1);
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                final OSSCustomSignerCredentialProvider credentialProvider = new OSSCustomSignerCredentialProvider() {
+                    @Override
+                    public String signContent(String content) {
+                        return OSSUtils.sign(accessKeyId, accessKeySecret, content);
+                    }
+                };
+                oss = new OSSClient(registrar.context(), endpoint, credentialProvider);
+                channel.invokeMethod("onInit", m1);
+            }
+        }).start();
     }
 
     private void asyncHeadObject(final MethodCall call){
@@ -158,12 +162,18 @@ public class AliossflutterPlugin implements MethodCallHandler {
         oss.asyncHeadObject(head, new OSSCompletedCallback<HeadObjectRequest, HeadObjectResult>() {
             @Override
             public void onSuccess(HeadObjectRequest request, HeadObjectResult result) {
-                Map<String, Object> m1 = new HashMap();
+                final Map<String, Object> m1 = new HashMap();
                 m1.put("key", key);
                 m1.put("result",true);
                 m1.put("lastModified",result.getMetadata().getLastModified().getTime());
                 m1.put("id", _id);
-                channel.invokeMethod("onHeadObject", m1);
+                activity.runOnUiThread(
+                        new Runnable() {
+                            @Override
+                            public void run() {
+                                channel.invokeMethod("onHeadObject", m1);
+                            }
+                        });
             }
 
             @Override
@@ -177,12 +187,18 @@ public class AliossflutterPlugin implements MethodCallHandler {
 
                 }
                 // 服务异常。
-                Map<String, Object> m1 = new HashMap();
+                final Map<String, Object> m1 = new HashMap();
                 m1.put("key", key);
                 m1.put("result", false);
                 m1.put("lastModified",0);
                 m1.put("id", _id);
-                channel.invokeMethod("onHeadObject", m1);
+                activity.runOnUiThread(
+                        new Runnable() {
+                            @Override
+                            public void run() {
+                                channel.invokeMethod("onHeadObject", m1);
+                            }
+                        });
             }
         });
     }
@@ -235,35 +251,34 @@ public class AliossflutterPlugin implements MethodCallHandler {
         conf.setSocketTimeout(15 * 1000); // Socket超时时间，默认15秒
         conf.setMaxConcurrentRequest(5); // 最大并发请求数，默认5个
         conf.setMaxErrorRetry(2); // 失败后最大重试次数，默认2次
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
+
                 oss = new OSSClient(registrar.context(), endpoint, credentialProvider, conf);
-                Map<String, String> m1 = new HashMap();
+                final Map<String, String> m1 = new HashMap();
                 m1.put("result", "success");
                 m1.put("id", _id);
-                channel.invokeMethod("onInit", m1);
-            }
-        }).start();
-
-
+        activity.runOnUiThread(
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        channel.invokeMethod("onInit", m1);
+                    }
+                });
     }
 
     private void upload(final MethodCall call) {
         final String key = call.argument("key");
         final String _id = call.argument("id");
         if (oss == null) {
-            Map<String, String> m1 = new HashMap();
+            final Map<String, String> m1 = new HashMap();
             m1.put("result", "fail");
             m1.put("id", _id);
             m1.put("key", key);
             m1.put("message", "请先初始化");
             channel.invokeMethod("onUpload", m1);
+
         } else {
             final String bucket = call.argument("bucket");
             final String file = call.argument("file");
-
-
             final String _callbackUrl = call.argument("callbackUrl");
             final String _callbackHost = call.argument("callbackHost");
             final String _callbackBodyType = call.argument("callbackBodyType");
@@ -274,12 +289,18 @@ public class AliossflutterPlugin implements MethodCallHandler {
                 @Override
                 public void onProgress(PutObjectRequest request, long currentSize, long totalSize) {
                     Log.d("onProgress", "currentSize: " + currentSize + " totalSize: " + totalSize);
-                    Map<String, String> m1 = new HashMap<String, String>();
+                    final Map<String, String> m1 = new HashMap<String, String>();
                     m1.put("key", key);
                     m1.put("currentSize", String.valueOf(currentSize));
                     m1.put("totalSize", String.valueOf(totalSize));
                     m1.put("id", _id);
-                    channel.invokeMethod("onProgress", m1);
+                    activity.runOnUiThread(
+                            new Runnable() {
+                                @Override
+                                public void run() {
+                                    channel.invokeMethod("onProgress", m1);
+                                }
+                            });
                 }
             });
             if (_callbackUrl != "" && _callbackUrl != null) {
@@ -301,12 +322,18 @@ public class AliossflutterPlugin implements MethodCallHandler {
                     }
                     put.setCallbackVars(_vars);
                 } catch (JSONException e) {
-                    Map<String, String> m1 = new HashMap();
+                    final Map<String, String> m1 = new HashMap();
                     m1.put("result", "fail");
                     m1.put("id", _id);
                     m1.put("key", key);
                     m1.put("message", "callbackVars 格式错误");
-                    channel.invokeMethod("onUpload", m1);
+                    activity.runOnUiThread(
+                            new Runnable() {
+                                @Override
+                                public void run() {
+                                    channel.invokeMethod("onUpload", m1);
+                                }
+                            });
                     return;
                 }
 
@@ -319,20 +346,26 @@ public class AliossflutterPlugin implements MethodCallHandler {
                             Log.d("RequestId", result.getRequestId());
 
                             String serverCallbackReturnJson = result.getServerCallbackReturnBody();
-                            Map<String, String> m1 = new HashMap();
+                            final Map<String, String> m1 = new HashMap();
                             m1.put("result", "success");
                             m1.put("tag", result.getETag());
                             m1.put("id", _id);
                             m1.put("key", key);
                             m1.put("servercallback", serverCallbackReturnJson);
                             m1.put("requestid", result.getRequestId());
-                            channel.invokeMethod("onUpload", m1);
+                            activity.runOnUiThread(
+                                    new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            channel.invokeMethod("onUpload", m1);
+                                        }
+                                    });
                         }
 
                         @Override
                         public void onFailure(PutObjectRequest request, ClientException clientExcepion, ServiceException serviceException) {
                             // 请求异常
-                            Map<String, String> m1 = new HashMap();
+                            final Map<String, String> m1 = new HashMap();
                             if (clientExcepion != null) {
                                 // 本地异常如网络异常等
                                 clientExcepion.printStackTrace();
@@ -354,7 +387,13 @@ public class AliossflutterPlugin implements MethodCallHandler {
                                 m1.put("key", key);
                                 m1.put("message", serviceException.getRawMessage());
                             }
-                            channel.invokeMethod("onUpload", m1);
+                            activity.runOnUiThread(
+                                    new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            channel.invokeMethod("onUpload", m1);
+                                        }
+                                    });
                         }
                     }
             );
@@ -386,11 +425,17 @@ public class AliossflutterPlugin implements MethodCallHandler {
             get.setProgressListener(new OSSProgressCallback<GetObjectRequest>() {
                 @Override
                 public void onProgress(GetObjectRequest request, long currentSize, long totalSize) {
-                    Map<String, Object> m1 = new HashMap();
+                    final Map<String, Object> m1 = new HashMap();
                     m1.put("currentSize", currentSize);
                     m1.put("totalSize", totalSize);
                     m1.put("key", _key);
-                    channel.invokeMethod("onProgress", m1);
+                    activity.runOnUiThread(
+                            new Runnable() {
+                                @Override
+                                public void run() {
+                                    channel.invokeMethod("onProgress", m1);
+                                }
+                            });
                 }
             });
             OSSAsyncTask task = oss.asyncGetObject(get, new OSSCompletedCallback<GetObjectRequest, GetObjectResult>() {
@@ -406,24 +451,34 @@ public class AliossflutterPlugin implements MethodCallHandler {
                         while ((len = inputStream.read(buffer)) != -1) {
                             os.write(buffer, 0, len);
                         }
-                        Map<String, String> m1 = new HashMap();
+                        final Map<String, String> m1 = new HashMap();
                         m1.put("result", "success");
                         m1.put("id", _id);
                         m1.put("path", _path);
                         m1.put("key", _key);
-                        channel.invokeMethod("onDownload", m1);
-                        _result.success(m1);
+                        activity.runOnUiThread(
+                                new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        channel.invokeMethod("onDownload", m1);
+                                    }
+                                });
                         os.flush();
                     } catch (IOException e) {
                         e.printStackTrace();
-                        Map<String, String> m1 = new HashMap();
+                        final Map<String, String> m1 = new HashMap();
                         m1.put("result", "fail");
                         m1.put("id", _id);
                         m1.put("path", _path);
                         m1.put("key", _key);
                         m1.put("message", e.getMessage());
-                        channel.invokeMethod("onDownload", m1);
-                        _result.success(m1);
+                        activity.runOnUiThread(
+                                new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        channel.invokeMethod("onDownload", m1);
+                                    }
+                                });
                     } finally {
                         try {
                             os.close();
@@ -440,14 +495,19 @@ public class AliossflutterPlugin implements MethodCallHandler {
                     if (clientExcepion != null) {
                         // 本地异常如网络异常等
                         clientExcepion.printStackTrace();
-                        Map<String, String> m1 = new HashMap();
+                        final Map<String, String> m1 = new HashMap();
                         m1.put("result", "fail");
                         m1.put("id", _id);
                         m1.put("path", _path);
                         m1.put("key", _key);
                         m1.put("message", clientExcepion.getMessage());
-                        channel.invokeMethod("onDownload", m1);
-                        _result.success(m1);
+                        activity.runOnUiThread(
+                                new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        channel.invokeMethod("onDownload", m1);
+                                    }
+                                });
                     }
                     if (serviceException != null) {
                         // 服务异常
@@ -455,14 +515,19 @@ public class AliossflutterPlugin implements MethodCallHandler {
                         Log.e("RequestId", serviceException.getRequestId());
                         Log.e("HostId", serviceException.getHostId());
                         Log.e("RawMessage", serviceException.getRawMessage());
-                        Map<String, String> m1 = new HashMap();
+                        final Map<String, String> m1 = new HashMap();
                         m1.put("result", "fail");
                         m1.put("id", _id);
                         m1.put("path", _path);
                         m1.put("key", _key);
                         m1.put("message", String.valueOf(serviceException.getStatusCode()));
-                        channel.invokeMethod("onDownload", m1);
-                        _result.success(m1);
+                        activity.runOnUiThread(
+                                new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        channel.invokeMethod("onDownload", m1);
+                                    }
+                                });
                     }
                 }
             });
@@ -487,25 +552,35 @@ public class AliossflutterPlugin implements MethodCallHandler {
             OSSAsyncTask deleteTask = oss.asyncDeleteObject(delete, new OSSCompletedCallback<DeleteObjectRequest, DeleteObjectResult>() {
                 @Override
                 public void onSuccess(DeleteObjectRequest request, DeleteObjectResult result) {
-                    Map<String, String> m1 = new HashMap();
+                    final Map<String, String> m1 = new HashMap();
                     m1.put("result", "success");
                     m1.put("id", _id);
                     m1.put("key", _key);
-                    channel.invokeMethod("onDelete", m1);
-                    _result.success(m1);
+                    activity.runOnUiThread(
+                            new Runnable() {
+                                @Override
+                                public void run() {
+                                    channel.invokeMethod("onDelete", m1);
+                                }
+                            });
                 }
 
                 @Override
                 public void onFailure(DeleteObjectRequest request, ClientException clientExcepion, ServiceException serviceException) {
                     // 请求异常
                     if (clientExcepion != null) {
-                        Map<String, String> m1 = new HashMap();
+                        final Map<String, String> m1 = new HashMap();
                         m1.put("result", "fail");
                         m1.put("id", _id);
                         m1.put("key", _key);
                         m1.put("message", clientExcepion.getMessage());
-                        channel.invokeMethod("onDelete", m1);
-                        _result.success(m1);
+                        activity.runOnUiThread(
+                                new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        channel.invokeMethod("onDelete", m1);
+                                    }
+                                });
                     }
                     if (serviceException != null) {
                         // 服务异常
@@ -513,13 +588,18 @@ public class AliossflutterPlugin implements MethodCallHandler {
                         Log.e("RequestId", serviceException.getRequestId());
                         Log.e("HostId", serviceException.getHostId());
                         Log.e("RawMessage", serviceException.getRawMessage());
-                        Map<String, String> m1 = new HashMap();
+                        final Map<String, String> m1 = new HashMap();
                         m1.put("result", "fail");
                         m1.put("id", _id);
                         m1.put("key", _key);
                         m1.put("message", String.valueOf(serviceException.getStatusCode()));
-                        channel.invokeMethod("onDelete", m1);
-                        _result.success(m1);
+                        activity.runOnUiThread(
+                                new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        channel.invokeMethod("onDelete", m1);
+                                    }
+                                });
                     }
                 }
 
@@ -545,36 +625,51 @@ public class AliossflutterPlugin implements MethodCallHandler {
             final String _type = call.argument("type");
 
             final Long _interval = Long.parseLong(call.argument("interval").toString());
-            Map<String, String> m1 = new HashMap();
+            final Map<String, String> m1 = new HashMap();
 
             if ("0".equals(_type)) {
                 m1.put("result", "success");
                 m1.put("id", _id);
                 m1.put("key", _key);
                 m1.put("url", oss.presignPublicObjectURL(_bucket, _key));
-                channel.invokeMethod("onSign", m1);
-                _result.success(m1);
+                activity.runOnUiThread(
+                        new Runnable() {
+                            @Override
+                            public void run() {
+                                channel.invokeMethod("onSign", m1);
+                            }
+                        });
             } else if ("1".equals(_type)) {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
                         try {
-                            Map<String, String> m1 = new HashMap();
+                            final Map<String, String> m1 = new HashMap();
                             m1.put("result", "success");
                             String url = oss.presignConstrainedObjectURL(_bucket, _key, _interval);
                             m1.put("url", url);
                             m1.put("key", _key);
                             m1.put("id", _id);
-                            channel.invokeMethod("onSign", m1);
-                            _result.success(m1);
+                            activity.runOnUiThread(
+                                    new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            channel.invokeMethod("onSign", m1);
+                                        }
+                                    });
                         } catch (ClientException e) {
-                            Map<String, String> m1 = new HashMap();
+                            final Map<String, String> m1 = new HashMap();
                             m1.put("result", "fail");
                             m1.put("message", e.toString());
                             m1.put("key", _key);
                             m1.put("id", _id);
-                            channel.invokeMethod("onSign", m1);
-                            _result.success(m1);
+                            activity.runOnUiThread(
+                                    new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            channel.invokeMethod("onSign", m1);
+                                        }
+                                    });
                         }
                     }
                 }).start();
@@ -583,8 +678,13 @@ public class AliossflutterPlugin implements MethodCallHandler {
                 m1.put("key", _key);
                 m1.put("message", "签名类型错误");
                 m1.put("id", _id);
-                channel.invokeMethod("onSign", m1);
-                _result.success(m1);
+                activity.runOnUiThread(
+                        new Runnable() {
+                            @Override
+                            public void run() {
+                                channel.invokeMethod("onSign", m1);
+                            }
+                        });
             }
 
         }
@@ -641,9 +741,7 @@ public class AliossflutterPlugin implements MethodCallHandler {
         String _res = "";
         try {
             if (_type.equals("encrypt")) {
-
                 _res = new String(AESCipher.aesEncryptString(_data, _key));
-
             } else if (_type.equals("decrypt")) {
                 _res = new String(AESCipher.aesDecryptString(_data, _key));
             }
