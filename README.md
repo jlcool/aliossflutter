@@ -55,6 +55,10 @@ alioss.responseFromInit.listen((data){
       }
     });
  ```
+使用keyid和Secret初始化
+```dart
+secretInit(String accessKeyId,String accessKeySecret, String endpoint) 
+```
 上传
 ```dart
 AliOSSFlutter  alioss=AliOSSFlutter();
