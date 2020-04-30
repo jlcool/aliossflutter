@@ -1,0 +1,74 @@
+{
+  "configVersion": 2,
+  "packages": [
+    {
+      "name": "charcode",
+      "rootUri": "file:///Users/jiangliang/development/flutter/.pub-cache/hosted/pub.flutter-io.cn/charcode-1.1.2",
+      "packageUri": "lib/",
+      "languageVersion": "1.0"
+    },
+    {
+      "name": "collection",
+      "rootUri": "file:///Users/jiangliang/development/flutter/.pub-cache/hosted/pub.flutter-io.cn/collection-1.14.12",
+      "packageUri": "lib/",
+      "languageVersion": "2.0"
+    },
+    {
+      "name": "convert",
+      "rootUri": "file:///Users/jiangliang/development/flutter/.pub-cache/hosted/pub.flutter-io.cn/convert-2.0.2",
+      "packageUri": "lib/",
+      "languageVersion": "1.17"
+    },
+    {
+      "name": "crypto",
+      "rootUri": "file:///Users/jiangliang/development/flutter/.pub-cache/hosted/pub.flutter-io.cn/crypto-2.0.6",
+      "packageUri": "lib/",
+      "languageVersion": "2.0"
+    },
+    {
+      "name": "flutter",
+      "rootUri": "file:///Users/jiangliang/development/flutter/packages/flutter",
+      "packageUri": "lib/",
+      "languageVersion": "2.2"
+    },
+    {
+      "name": "meta",
+      "rootUri": "file:///Users/jiangliang/development/flutter/.pub-cache/hosted/pub.flutter-io.cn/meta-1.1.8",
+      "packageUri": "lib/",
+      "languageVersion": "1.12"
+    },
+    {
+      "name": "sky_engine",
+      "rootUri": "file:///Users/jiangliang/development/flutter/bin/cache/pkg/sky_engine",
+      "packageUri": "lib/",
+      "languageVersion": "1.11"
+    },
+    {
+      "name": "typed_data",
+      "rootUri": "file:///Users/jiangliang/development/flutter/.pub-cache/hosted/pub.flutter-io.cn/typed_data-1.1.6",
+      "packageUri": "lib/",
+      "languageVersion": "2.0"
+    },
+    {
+      "name": "uuid",
+      "rootUri": "file:///Users/jiangliang/development/flutter/.pub-cache/hosted/pub.flutter-io.cn/uuid-2.0.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.0"
+    },
+    {
+      "name": "vector_math",
+      "rootUri": "file:///Users/jiangliang/development/flutter/.pub-cache/hosted/pub.flutter-io.cn/vector_math-2.0.8",
+      "packageUri": "lib/",
+      "languageVersion": "2.0"
+    },
+    {
+      "name": "aliossflutter",
+      "rootUri": "../",
+      "packageUri": "lib/",
+      "languageVersion": "2.0"
+    }
+  ],
+  "generated": "2020-04-28T11:52:24.252600Z",
+  "generator": "pub",
+  "generatorVersion": "2.8.0-dev.20.0.flutter-dcdc71d763"
+}

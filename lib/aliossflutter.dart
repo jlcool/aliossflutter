@@ -47,6 +47,10 @@ class AliOSSFlutter {
     new StreamController.broadcast();
     Stream<HeadObjectResponse> get responseFromHeadObject => _responseHeadObjectController.stream;
 
+StreamController<ListObjectsResponse> _responseListObjectsController =
+      new StreamController.broadcast();
+  Stream<ListObjectsResponse> get responseFromListObjects => _responseListObjectsController.stream;
+
   Future<dynamic> _invokeMethod(String method,
       [Map<String, dynamic> arguments = const {}]) {
     Map<String, dynamic> withId = Map.of(arguments);
@@ -126,6 +130,14 @@ class AliOSSFlutter {
       res.lastModified=methodCall.arguments["lastModified"];
       oss._responseHeadObjectController.add(res);
       break;
+      case "onListObjects":
+        ListObjectsResponse res=ListObjectsResponse(success: false);
+        if("success"==methodCall.arguments["result"]){
+          res.success=true;
+        }
+        res.objects=methodCall.arguments["objects"];
+        oss._responseListObjectsController.add(res);
+        break;
     }
     return Future.value(true);
   }
@@ -189,6 +201,15 @@ class AliOSSFlutter {
     return await _invokeMethod('delete', <String, String>{
       "bucket": bucket,
       "key": key,
+    });
+  }
+  Future listObjects(String bucket, {String prefix="",int maxkeys=100,String marker="",String delimiter=""}) async {
+    return await _invokeMethod('listObjects', <String, dynamic>{
+      "bucket": bucket,
+      "prefix": prefix,
+      "maxkeys":maxkeys,
+      "marker":marker,
+      "delimiter":delimiter
     });
   }
 //3des 加解密

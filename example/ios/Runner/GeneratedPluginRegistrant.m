@@ -3,7 +3,12 @@
 //
 
 #import "GeneratedPluginRegistrant.h"
+
+#if __has_include(<aliossflutter/AliossflutterPlugin.h>)
 #import <aliossflutter/AliossflutterPlugin.h>
+#else
+@import aliossflutter;
+#endif
 
 @implementation GeneratedPluginRegistrant
 

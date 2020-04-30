@@ -42,3 +42,8 @@ class HeadObjectResponse {
   String key;
   HeadObjectResponse({this.success,this.lastModified,this.key});
 }
+class ListObjectsResponse {
+    bool success;
+    List objects;
+  ListObjectsResponse({this.success,this.objects});
+}

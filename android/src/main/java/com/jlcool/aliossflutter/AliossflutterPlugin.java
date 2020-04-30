@@ -11,8 +11,6 @@ import com.alibaba.sdk.android.oss.ServiceException;
 import com.alibaba.sdk.android.oss.callback.OSSCompletedCallback;
 import com.alibaba.sdk.android.oss.callback.OSSProgressCallback;
 import com.alibaba.sdk.android.oss.common.OSSConstants;
-import com.alibaba.sdk.android.oss.common.OSSLog;
-import com.alibaba.sdk.android.oss.common.auth.OSSAuthCredentialsProvider;
 import com.alibaba.sdk.android.oss.common.auth.OSSCredentialProvider;
 import com.alibaba.sdk.android.oss.common.auth.OSSCustomSignerCredentialProvider;
 import com.alibaba.sdk.android.oss.common.auth.OSSFederationCredentialProvider;
@@ -22,36 +20,29 @@ import com.alibaba.sdk.android.oss.common.utils.OSSUtils;
 import com.alibaba.sdk.android.oss.internal.OSSAsyncTask;
 import com.alibaba.sdk.android.oss.model.DeleteObjectRequest;
 import com.alibaba.sdk.android.oss.model.DeleteObjectResult;
-import com.alibaba.sdk.android.oss.model.GeneratePresignedUrlRequest;
 import com.alibaba.sdk.android.oss.model.GetObjectRequest;
 import com.alibaba.sdk.android.oss.model.GetObjectResult;
 import com.alibaba.sdk.android.oss.model.HeadObjectRequest;
 import com.alibaba.sdk.android.oss.model.HeadObjectResult;
+import com.alibaba.sdk.android.oss.model.ListObjectsRequest;
+import com.alibaba.sdk.android.oss.model.ListObjectsResult;
 import com.alibaba.sdk.android.oss.model.PutObjectRequest;
 import com.alibaba.sdk.android.oss.model.PutObjectResult;
-
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.logging.Handler;
-
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
@@ -74,7 +65,7 @@ public class AliossflutterPlugin implements MethodCallHandler {
 
     private AliossflutterPlugin(Registrar registrar, Activity activity) {
         this.registrar = registrar;
-        this.activity=activity;
+        this.activity = activity;
     }
 
     /**
@@ -84,6 +75,7 @@ public class AliossflutterPlugin implements MethodCallHandler {
         channel = new MethodChannel(registrar.messenger(), "aliossflutter");
         channel.setMethodCallHandler(new AliossflutterPlugin(registrar, registrar.activity()));
     }
+
     @Override
     public void onMethodCall(MethodCall call, Result result) {
         _result = result;
@@ -119,6 +111,9 @@ public class AliossflutterPlugin implements MethodCallHandler {
             case "asyncHeadObject":
                 asyncHeadObject(call);
                 break;
+            case "listObjects":
+                ListObjects(call);
+                break;
             default:
                 result.notImplemented();
                 break;
@@ -145,7 +140,7 @@ public class AliossflutterPlugin implements MethodCallHandler {
         channel.invokeMethod("onInit", m1);
     }
 
-    private void asyncHeadObject(final MethodCall call){
+    private void asyncHeadObject(final MethodCall call) {
         final String bucket = call.argument("bucket");
         final String key = call.argument("key");
         final String _id = call.argument("id");
@@ -159,8 +154,8 @@ public class AliossflutterPlugin implements MethodCallHandler {
             public void onSuccess(HeadObjectRequest request, HeadObjectResult result) {
                 final Map<String, Object> m1 = new HashMap();
                 m1.put("key", key);
-                m1.put("result",true);
-                m1.put("lastModified",result.getMetadata().getLastModified().getTime());
+                m1.put("result", true);
+                m1.put("lastModified", result.getMetadata().getLastModified().getTime());
                 m1.put("id", _id);
                 activity.runOnUiThread(
                         new Runnable() {
@@ -185,7 +180,7 @@ public class AliossflutterPlugin implements MethodCallHandler {
                 final Map<String, Object> m1 = new HashMap();
                 m1.put("key", key);
                 m1.put("result", false);
-                m1.put("lastModified",0);
+                m1.put("lastModified", 0);
                 m1.put("id", _id);
                 activity.runOnUiThread(
                         new Runnable() {
@@ -247,10 +242,10 @@ public class AliossflutterPlugin implements MethodCallHandler {
         conf.setMaxConcurrentRequest(5); // 最大并发请求数，默认5个
         conf.setMaxErrorRetry(2); // 失败后最大重试次数，默认2次
 
-                oss = new OSSClient(registrar.context(), endpoint, credentialProvider, conf);
-                final Map<String, String> m1 = new HashMap();
-                m1.put("result", "success");
-                m1.put("id", _id);
+        oss = new OSSClient(registrar.context(), endpoint, credentialProvider, conf);
+        final Map<String, String> m1 = new HashMap();
+        m1.put("result", "success");
+        m1.put("id", _id);
         activity.runOnUiThread(
                 new Runnable() {
                     @Override
@@ -707,6 +702,95 @@ public class AliossflutterPlugin implements MethodCallHandler {
                 Log.e("RawMessage", e.getRawMessage());
                 _result.error("err", e.getMessage(), null);
             }
+        }
+    }
+
+    //获取文件列表
+    private void ListObjects(final MethodCall call) {
+        final String _id = call.argument("id");
+        final String _bucket = call.argument("bucket");
+        final String _prefix = call.argument("prefix");
+        final Integer _maxkeys = call.argument("maxkeys");
+        final String _marker = call.argument("marker");
+        final String _delimiter = call.argument("delimiter");
+        if (oss == null) {
+            _result.error("err", "请先初始化", null);
+        } else {
+            ListObjectsRequest listObjects = new ListObjectsRequest(_bucket);
+
+            listObjects.setPrefix(_prefix);
+            listObjects.setMaxKeys(_maxkeys);
+            listObjects.setMarker(_marker);
+            listObjects.setDelimiter(_delimiter);
+
+            OSSAsyncTask task = oss.asyncListObjects(listObjects, new OSSCompletedCallback<ListObjectsRequest, ListObjectsResult>() {
+                @Override
+                public void onSuccess(ListObjectsRequest request, ListObjectsResult result) {
+                    final Map<String, Object> objects = new HashMap<>();
+                    List<Map<String, Object>> listObjects=new ArrayList();;
+                    objects.put("result", "success");
+                    objects.put("id", _id);
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                    for (int i = 0; i < result.getObjectSummaries().size(); i++) {
+                        Map<String, Object> m1=new HashMap<>();
+                        m1.put("key",result.getObjectSummaries().get(i).getKey());
+                        m1.put("etag",result.getObjectSummaries().get(i).getETag());
+                        m1.put("lastModified",sdf.format(result.getObjectSummaries().get(i).getLastModified()));
+
+                        m1.put("size",result.getObjectSummaries().get(i).getSize());
+                        m1.put("type",result.getObjectSummaries().get(i).getType());
+                        listObjects.add(m1);
+                    }
+                    objects.put("objects", listObjects);
+                    activity.runOnUiThread(
+                            new Runnable() {
+                                @Override
+                                public void run() {
+                                    channel.invokeMethod("onListObjects", objects);
+                                }
+                            });
+                }
+
+                @Override
+                public void onFailure(ListObjectsRequest request, ClientException clientExcepion, ServiceException serviceException) {
+                    // 请求异常
+                    if (clientExcepion != null) {
+                        final Map<String, String> m1 = new HashMap();
+                        m1.put("result", "fail");
+                        m1.put("id", _id);
+                        m1.put("message", clientExcepion.getMessage());
+                        activity.runOnUiThread(
+                                new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        channel.invokeMethod("onListObjects", m1);
+                                    }
+                                });
+                        // 本地异常如网络异常等
+                        clientExcepion.printStackTrace();
+
+                    }
+                    if (serviceException != null) {
+                        final Map<String, String> m1 = new HashMap();
+                        m1.put("result", "fail");
+                        m1.put("id", _id);
+                        m1.put("message", serviceException.getMessage());
+                        activity.runOnUiThread(
+                                new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        channel.invokeMethod("onListObjects", m1);
+                                    }
+                                });
+                        // 服务异常
+                        Log.e("ErrorCode", serviceException.getErrorCode());
+                        Log.e("RequestId", serviceException.getRequestId());
+                        Log.e("HostId", serviceException.getHostId());
+                        Log.e("RawMessage", serviceException.getRawMessage());
+                    }
+                }
+            });
+            task.waitUntilFinished();
         }
     }
 

@@ -35,7 +35,7 @@ class _MyAppState extends State<MyApp> {
     super.initState();
 
     alioss.responseFromProgress.listen((data) {
-      if(data.key==key) {
+      if (data.key == key) {
         print("_progress:" + data.getProgress().toString());
         setState(() {
           _progress = data.getProgress();
@@ -98,13 +98,28 @@ class _MyAppState extends State<MyApp> {
         });
       }
     });
+
+    alioss.responseFromListObjects.listen((data) {
+      if (data.success) {
+        data.objects.forEach((element) {
+          _msg += "${element["key"]} \n";
+        });
+        setState(() {});
+      } else {
+        setState(() {
+          _msg = "获取失败";
+        });
+      }
+    });
   }
 
   void _init() async {
     //初始化
-    alioss.init(stsserver, endpoint,
-        cryptkey: cryptkey,
-        crypttype: "aes"); //,cryptkey: cryptkey,crypttype: "aes"
+    // alioss.init(stsserver, endpoint,
+    //     cryptkey: cryptkey,
+    //     crypttype: "aes"); //,cryptkey: cryptkey,crypttype: "aes"
+
+        alioss.secretInit("***REMOVED***","***REMOVED***","https://oss-cn-hangzhou.aliyuncs.com");
   }
 
   void _uploadPic() async {
@@ -142,6 +157,10 @@ class _MyAppState extends State<MyApp> {
     alioss.delete(bucket, key);
   }
 
+  void _listObjects() {
+    alioss.listObjects("jiyi1");
+  }
+
   void _download() async {
     String downloadPath = "";
     alioss.download(bucket, key, downloadPath + "/" + key);
@@ -159,7 +178,6 @@ class _MyAppState extends State<MyApp> {
       _msg = "错误：$err";
       setState(() {});
     });
-
   }
 
   @override
@@ -209,6 +227,10 @@ class _MyAppState extends State<MyApp> {
                   MaterialButton(
                     onPressed: _delete,
                     child: Text("删除图片"),
+                  ),
+                  MaterialButton(
+                    onPressed: _listObjects,
+                    child: Text("列出文件"),
                   )
                 ],
               ),
