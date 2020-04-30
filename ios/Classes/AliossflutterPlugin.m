@@ -44,6 +44,9 @@ OSSClient *oss ;
     }else if ([@"doesObjectExist" isEqualToString:call.method]) {
         [self doesObjectExist:call result:result];
         return;
+    }else if ([@"listObjects" isEqualToString:call.method]) {
+        [self listObjects:call result:result];
+        return;
     }else {
         result(FlutterMethodNotImplemented);
     }
@@ -425,6 +428,54 @@ OSSClient *oss ;
                                        message:@"发生错误"
                                        details:nil]);
         }
+    }
+}
+
+- (void)listObjects:(FlutterMethodCall*)call result:(FlutterResult)result {
+    NSString * bucket =call.arguments[@"bucket"];
+    NSString * _id = call.arguments[@"id"];
+    NSString * _marker = call.arguments[@"marker"];
+    int _maxKeys =[call.arguments[@"maxKeys"] intValue];
+    NSString * _prefix = call.arguments[@"prefix"];
+    NSString * _delimiter = call.arguments[@"delimiter"];
+    if (oss == nil) {
+        NSDictionary *m1 = @{
+                             @"result":  @"fail",
+                             @"id": _id,
+                             @"message":@"请先初始化"
+                             };
+        [channel invokeMethod:@"onListObjects" arguments:m1];
+    } else {
+        OSSGetBucketRequest * getBucket = [OSSGetBucketRequest new];
+        getBucket.bucketName = bucket;
+
+        // 以下参数为可选参数，具体含义及说明请参见下表。
+         getBucket.marker =_marker;
+         getBucket.maxKeys = _maxKeys;
+         getBucket.prefix = _prefix;
+         getBucket.delimiter = _delimiter;
+
+        OSSTask * getBucketTask = [oss getBucket:getBucket];
+
+        [getBucketTask continueWithBlock:^id(OSSTask *task) {
+            if (!task.error) {
+                OSSGetBucketResult * result = task.result;
+                NSDictionary *objects = @{
+                @"result":  @"success",
+                @"id": _id,
+                @"objects":result.contents
+                };
+                [channel invokeMethod:@"onListObjects" arguments:objects];
+            } else {
+                NSDictionary *m1 = @{
+                @"result":  @"fail",
+                @"id": _id,
+                @"message":task.error
+                };
+                [channel invokeMethod:@"onListObjects" arguments:m1];
+            }
+            return nil;
+        }];
     }
 }
 @end

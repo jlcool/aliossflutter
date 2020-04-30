@@ -26,6 +26,7 @@ import com.alibaba.sdk.android.oss.model.HeadObjectRequest;
 import com.alibaba.sdk.android.oss.model.HeadObjectResult;
 import com.alibaba.sdk.android.oss.model.ListObjectsRequest;
 import com.alibaba.sdk.android.oss.model.ListObjectsResult;
+import com.alibaba.sdk.android.oss.model.OSSObjectSummary;
 import com.alibaba.sdk.android.oss.model.PutObjectRequest;
 import com.alibaba.sdk.android.oss.model.PutObjectResult;
 
@@ -723,7 +724,7 @@ public class AliossflutterPlugin implements MethodCallHandler {
             listObjects.setMarker(_marker);
             listObjects.setDelimiter(_delimiter);
 
-            OSSAsyncTask task = oss.asyncListObjects(listObjects, new OSSCompletedCallback<ListObjectsRequest, ListObjectsResult>() {
+            oss.asyncListObjects(listObjects, new OSSCompletedCallback<ListObjectsRequest, ListObjectsResult>() {
                 @Override
                 public void onSuccess(ListObjectsRequest request, ListObjectsResult result) {
                     final Map<String, Object> objects = new HashMap<>();
@@ -731,14 +732,15 @@ public class AliossflutterPlugin implements MethodCallHandler {
                     objects.put("result", "success");
                     objects.put("id", _id);
                     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                    for (int i = 0; i < result.getObjectSummaries().size(); i++) {
+                    List<OSSObjectSummary> ossObjects=result.getObjectSummaries();
+                    for (int i = 0; i < ossObjects.size(); i++) {
                         Map<String, Object> m1=new HashMap<>();
-                        m1.put("key",result.getObjectSummaries().get(i).getKey());
-                        m1.put("etag",result.getObjectSummaries().get(i).getETag());
-                        m1.put("lastModified",sdf.format(result.getObjectSummaries().get(i).getLastModified()));
+                        m1.put("Key",ossObjects.get(i).getKey());
+                        m1.put("Etag",ossObjects.get(i).getETag());
+                        m1.put("LastModified",sdf.format(ossObjects.get(i).getLastModified()));
 
-                        m1.put("size",result.getObjectSummaries().get(i).getSize());
-                        m1.put("type",result.getObjectSummaries().get(i).getType());
+                        m1.put("Size",ossObjects.get(i).getSize());
+                        m1.put("Type",ossObjects.get(i).getType());
                         listObjects.add(m1);
                     }
                     objects.put("objects", listObjects);
@@ -790,7 +792,6 @@ public class AliossflutterPlugin implements MethodCallHandler {
                     }
                 }
             });
-            task.waitUntilFinished();
         }
     }
 

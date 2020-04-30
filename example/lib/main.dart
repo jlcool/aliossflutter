@@ -102,7 +102,7 @@ class _MyAppState extends State<MyApp> {
     alioss.responseFromListObjects.listen((data) {
       if (data.success) {
         data.objects.forEach((element) {
-          _msg += "${element["key"]} \n";
+          _msg += "${element["Key"]} \n";
         });
         setState(() {});
       } else {
@@ -115,11 +115,11 @@ class _MyAppState extends State<MyApp> {
 
   void _init() async {
     //初始化
-    // alioss.init(stsserver, endpoint,
-    //     cryptkey: cryptkey,
-    //     crypttype: "aes"); //,cryptkey: cryptkey,crypttype: "aes"
-
-        alioss.secretInit("***REMOVED***","***REMOVED***","https://oss-cn-hangzhou.aliyuncs.com");
+    alioss.init(stsserver, endpoint,
+        cryptkey: cryptkey,
+        crypttype: "aes"); //,cryptkey: cryptkey,crypttype: "aes"
+    //或者
+    //alioss.secretInit("","","");
   }
 
   void _uploadPic() async {
