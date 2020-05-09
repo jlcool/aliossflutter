@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:aliossflutter/response.dart';
 import 'package:flutter/services.dart';
 import 'package:uuid/uuid.dart';
+import 'dart:convert';
 
 class AliOSSFlutter {
     final MethodChannel _channel = MethodChannel('aliossflutter')
@@ -61,81 +62,89 @@ StreamController<ListObjectsResponse> _responseListObjectsController =
 
 //监听回调方法
   static Future<dynamic> _handler(MethodCall methodCall) {
-    String id = (methodCall.arguments as Map)['id'];
+    Map arguments;
+    if(methodCall.arguments is String)
+      {
+        arguments=json.decode(methodCall.arguments);
+      }
+    else {
+      arguments = methodCall.arguments as Map;
+    }
+    String id = arguments['id'];
     AliOSSFlutter oss = alis[id];
     switch (methodCall.method) {
       case "onInit":
         bool flag=false;
-        if("success"==methodCall.arguments["result"]){
+        if("success"==arguments["result"]){
           flag=true;
         }
         oss._responseInitController.add(flag);
         break;
       case "onProgress":
         ProgressResponse res = new ProgressResponse(
-          key: methodCall.arguments["key"].toString(),
+          key: arguments["key"].toString(),
             currentSize:
-                double.parse(methodCall.arguments["currentSize"].toString()),
+                double.parse(arguments["currentSize"].toString()),
             totalSize:
-                double.parse(methodCall.arguments["totalSize"].toString()));
+                double.parse(arguments["totalSize"].toString()));
         oss._responseProgressController.add(res);
         break;
       case "onSign":
         SignResponse res=SignResponse(success: false);
-        if("success"==methodCall.arguments["result"]){
+        if("success"==arguments["result"]){
           res.success=true;
-          res.url=methodCall.arguments["url"];
+          res.url=arguments["url"];
         }else{
-          res.msg=methodCall.arguments["message"];
+          res.msg=arguments["message"];
         }
-        res.key=methodCall.arguments["key"].toString();
+        res.key=arguments["key"].toString();
         oss._responseSignController.add(res);
         break;
         case "onDelete":
         DeleteResponse res=DeleteResponse(success: false);
-        if("success"==methodCall.arguments["result"]){
+        if("success"==arguments["result"]){
           res.success=true;
         }
-        res.key=methodCall.arguments["key"];
+        res.key=arguments["key"];
         oss._responseDeleteController.add(res);
         break;
       case "onUpload":
         UploadResponse res=UploadResponse(success: false);
-        if("success"==methodCall.arguments["result"]){
+        if("success"==arguments["result"]){
           res.success=true;
-          res.servercallback=methodCall.arguments["servercallback"];
+          res.servercallback=arguments["servercallback"];
         }else{
-          res.msg=methodCall.arguments["message"];
+          res.msg=arguments["message"];
         }
-        res.key=methodCall.arguments["key"];
+        res.key=arguments["key"];
         oss._responseUploadController.add(res);
         break;
       case "onDownload":
         DownloadResponse res=DownloadResponse(success: false);
-        if("success"==methodCall.arguments["result"]){
+        if("success"==arguments["result"]){
           res.success=true;
-          res.path=methodCall.arguments["path"];
+          res.path=arguments["path"];
         }else{
-          res.msg=methodCall.arguments["message"];
+          res.msg=arguments["message"];
         }
-        res.key=methodCall.arguments["key"].toString();
+        res.key=arguments["key"].toString();
         oss._responseDownloadController.add(res);
         break;
         case "asyncHeadObject":
           HeadObjectResponse res=HeadObjectResponse(success: false);
-      if(methodCall.arguments["result"]){
+      if(arguments["result"]){
         res.success=true;
       }
-      res.key=methodCall.arguments["key"];
-      res.lastModified=methodCall.arguments["lastModified"];
+      res.key=arguments["key"];
+      res.lastModified=arguments["lastModified"];
       oss._responseHeadObjectController.add(res);
       break;
       case "onListObjects":
         ListObjectsResponse res=ListObjectsResponse(success: false);
-        if("success"==methodCall.arguments["result"]){
+        if("success"==arguments["result"]){
           res.success=true;
         }
-        res.objects=methodCall.arguments["objects"];
+        res.objects=arguments["objects"];
         oss._responseListObjectsController.add(res);
         break;
     }

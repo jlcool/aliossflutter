@@ -420,6 +420,7 @@ public class AliossflutterPlugin implements MethodCallHandler {
                     m1.put("currentSize", currentSize);
                     m1.put("totalSize", totalSize);
                     m1.put("key", _key);
+                    m1.put("id", _id);
                     activity.runOnUiThread(
                             new Runnable() {
                                 @Override
