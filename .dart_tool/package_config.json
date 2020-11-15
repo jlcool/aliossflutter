@@ -2,26 +2,32 @@
   "configVersion": 2,
   "packages": [
     {
+      "name": "characters",
+      "rootUri": "file:///Users/jiangliang/.pub-cache/hosted/pub.flutter-io.cn/characters-1.1.0-nullsafety.2",
+      "packageUri": "lib/",
+      "languageVersion": "2.10"
+    },
+    {
       "name": "charcode",
-      "rootUri": "file:///Users/jiangliang/development/flutter/.pub-cache/hosted/pub.flutter-io.cn/charcode-1.1.2",
+      "rootUri": "file:///Users/jiangliang/.pub-cache/hosted/pub.flutter-io.cn/charcode-1.1.2",
       "packageUri": "lib/",
       "languageVersion": "1.0"
     },
     {
       "name": "collection",
-      "rootUri": "file:///Users/jiangliang/development/flutter/.pub-cache/hosted/pub.flutter-io.cn/collection-1.14.12",
+      "rootUri": "file:///Users/jiangliang/.pub-cache/hosted/pub.flutter-io.cn/collection-1.15.0-nullsafety.2",
       "packageUri": "lib/",
-      "languageVersion": "2.0"
+      "languageVersion": "2.10"
     },
     {
       "name": "convert",
-      "rootUri": "file:///Users/jiangliang/development/flutter/.pub-cache/hosted/pub.flutter-io.cn/convert-2.0.2",
+      "rootUri": "file:///Users/jiangliang/.pub-cache/hosted/pub.flutter-io.cn/convert-2.0.2",
       "packageUri": "lib/",
       "languageVersion": "1.17"
     },
     {
       "name": "crypto",
-      "rootUri": "file:///Users/jiangliang/development/flutter/.pub-cache/hosted/pub.flutter-io.cn/crypto-2.0.6",
+      "rootUri": "file:///Users/jiangliang/.pub-cache/hosted/pub.flutter-io.cn/crypto-2.0.6",
       "packageUri": "lib/",
       "languageVersion": "2.0"
     },
@@ -29,13 +35,13 @@
       "name": "flutter",
       "rootUri": "file:///Users/jiangliang/development/flutter/packages/flutter",
       "packageUri": "lib/",
-      "languageVersion": "2.2"
+      "languageVersion": "2.10"
     },
     {
       "name": "meta",
-      "rootUri": "file:///Users/jiangliang/development/flutter/.pub-cache/hosted/pub.flutter-io.cn/meta-1.1.8",
+      "rootUri": "file:///Users/jiangliang/.pub-cache/hosted/pub.flutter-io.cn/meta-1.3.0-nullsafety.2",
       "packageUri": "lib/",
-      "languageVersion": "1.12"
+      "languageVersion": "2.10"
     },
     {
       "name": "sky_engine",
@@ -45,21 +51,21 @@
     },
     {
       "name": "typed_data",
-      "rootUri": "file:///Users/jiangliang/development/flutter/.pub-cache/hosted/pub.flutter-io.cn/typed_data-1.1.6",
+      "rootUri": "file:///Users/jiangliang/.pub-cache/hosted/pub.flutter-io.cn/typed_data-1.3.0-nullsafety.2",
       "packageUri": "lib/",
-      "languageVersion": "2.0"
+      "languageVersion": "2.10"
     },
     {
       "name": "uuid",
-      "rootUri": "file:///Users/jiangliang/development/flutter/.pub-cache/hosted/pub.flutter-io.cn/uuid-2.0.0",
+      "rootUri": "file:///Users/jiangliang/.pub-cache/hosted/pub.flutter-io.cn/uuid-2.0.0",
       "packageUri": "lib/",
       "languageVersion": "2.0"
     },
     {
       "name": "vector_math",
-      "rootUri": "file:///Users/jiangliang/development/flutter/.pub-cache/hosted/pub.flutter-io.cn/vector_math-2.0.8",
+      "rootUri": "file:///Users/jiangliang/.pub-cache/hosted/pub.flutter-io.cn/vector_math-2.1.0-nullsafety.2",
       "packageUri": "lib/",
-      "languageVersion": "2.0"
+      "languageVersion": "2.10"
     },
     {
       "name": "aliossflutter",
@@ -68,7 +74,7 @@
       "languageVersion": "2.0"
     }
   ],
-  "generated": "2020-04-30T09:17:24.624023Z",
+  "generated": "2020-11-15T14:07:15.905922Z",
   "generator": "pub",
-  "generatorVersion": "2.9.0-3.0.dev.flutter-726d3c7725"
+  "generatorVersion": "2.10.0-38.0.dev"
 }

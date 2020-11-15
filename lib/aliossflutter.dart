@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:aliossflutter/response.dart';
 import 'package:flutter/services.dart';
 import 'package:uuid/uuid.dart';
@@ -155,6 +156,11 @@ StreamController<ListObjectsResponse> _responseListObjectsController =
   Future upload(String bucket, String file, String key,{String callbackUrl,String callbackHost,String callbackBodyType,String callbackBody,String callbackVars}) async {
     return await _invokeMethod(
         'upload', <String, String>{"bucket": bucket, "file": file, "key": key, "callbackUrl": callbackUrl, "callbackHost": callbackHost, "callbackBodyType": callbackBodyType, "callbackBody": callbackBody, "callbackVars": callbackVars});
+  }
+
+  Future uploadByte(String bucket, Uint8List fileByte, String key,{String callbackUrl,String callbackHost,String callbackBodyType,String callbackBody,String callbackVars}) async {
+    return await _invokeMethod(
+        'uploadByte', <String, dynamic>{"bucket": bucket, "fileByte": fileByte, "key": key, "callbackUrl": callbackUrl, "callbackHost": callbackHost, "callbackBodyType": callbackBodyType, "callbackBody": callbackBody, "callbackVars": callbackVars});
   }
 
 //初始化

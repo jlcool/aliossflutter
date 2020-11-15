@@ -28,6 +28,9 @@ OSSClient *oss ;
     }else if ([@"upload" isEqualToString:call.method]) {
         [self update:call result:result];
         return;
+    }else if ([@"uploadByte" isEqualToString:call.method]) {
+        [self updateByte:call result:result];
+        return;
     }
     else if ([@"download" isEqualToString:call.method]) {
         [self download:call result:result];
@@ -173,6 +176,68 @@ OSSClient *oss ;
         put.bucketName = bucket;
         put.objectKey = key;
         put.uploadingFileURL = [NSURL fileURLWithPath:file];
+        // put.uploadingData = <NSData *>; // 直接上传NSData
+        put.uploadProgress = ^(int64_t bytesSent, int64_t totalByteSent, int64_t totalBytesExpectedToSend) {
+            // 当前上传段长度、当前已经上传总长度、一共需要上传的总长度
+            NSDictionary *m1 = @{
+                                 @"key":key,
+                                 @"currentSize":  [NSString stringWithFormat:@"%lld",totalByteSent],
+                                 @"totalSize": [NSString stringWithFormat:@"%lld",totalBytesExpectedToSend],
+                                 @"id":_id
+                                 };
+            [channel invokeMethod:@"onProgress" arguments:m1];
+        };
+        
+        // 以下可选字段的含义参考： https://docs.aliyun.com/#/pub/oss/api-reference/object&PutObject
+        // put.contentType = @"";
+        // put.contentMd5 = @"";
+        // put.contentEncoding = @"";
+        // put.contentDisposition = @"";
+        // put.objectMeta = [NSMutableDictionary dictionaryWithObjectsAndKeys:@"value1", @"x-oss-meta-name1", nil]; // 可以在上传时设置元信息或者其他HTTP头部
+        OSSTask * putTask = [oss putObject:put];
+        [putTask continueWithBlock:^id(OSSTask *task) {
+            if (!task.error) {
+                NSDictionary *m1 = @{
+                                     @"result": @"success",
+                                     @"key":key,
+                                     @"id":_id
+                                     };
+                [channel invokeMethod:@"onUpload" arguments:m1];
+            } else {
+                
+                NSDictionary *m1 = @{
+                                     @"result": @"fail",
+                                     @"key":key,
+                                     @"id":_id,
+                                     @"message":task.error
+                                     };
+                [channel invokeMethod:@"onUpload" arguments:m1];
+            }
+            return nil;
+        }];
+        // [putTask waitUntilFinished];
+        // [put cancel];
+    }
+}
+- (void)updateByte:(FlutterMethodCall*)call result:(FlutterResult)result {
+    NSString * _id = call.arguments[@"id"];
+    NSString * key = call.arguments[@"key"];
+    if (oss == nil) {
+        NSDictionary *m1 = @{
+                             @"result":  @"fail",
+                             @"id": _id,
+                             @"key":key,
+                             @"message":@"请先初始化"
+                             };
+        [channel invokeMethod:@"onUpload" arguments:m1];
+    } else {
+        NSString *bucket = call.arguments[@"bucket"];
+        FlutterStandardTypedData * fileByte=call.arguments[@"fileByte"];
+        OSSPutObjectRequest * put = [OSSPutObjectRequest new];
+        // 必填字段
+        put.bucketName = bucket;
+        put.objectKey = key;
+        put.uploadingData =fileByte.data;
         // put.uploadingData = <NSData *>; // 直接上传NSData
         put.uploadProgress = ^(int64_t bytesSent, int64_t totalByteSent, int64_t totalBytesExpectedToSend) {
             // 当前上传段长度、当前已经上传总长度、一共需要上传的总长度

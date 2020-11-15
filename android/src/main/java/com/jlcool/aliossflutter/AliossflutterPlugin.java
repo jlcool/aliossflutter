@@ -86,6 +86,9 @@ public class AliossflutterPlugin implements MethodCallHandler {
             case "upload":
                 upload(call);
                 break;
+            case "uploadByte":
+                uploadByte(call);
+                break;
             case "download":
                 download(call);
                 break;
@@ -276,6 +279,141 @@ public class AliossflutterPlugin implements MethodCallHandler {
             final String _callbackBody = call.argument("callbackBody");
             final String _callbackVars = call.argument("callbackVars");
             PutObjectRequest put = new PutObjectRequest(bucket, key, file);
+            put.setProgressCallback(new OSSProgressCallback<PutObjectRequest>() {
+                @Override
+                public void onProgress(PutObjectRequest request, long currentSize, long totalSize) {
+                    Log.d("onProgress", "currentSize: " + currentSize + " totalSize: " + totalSize);
+                    final Map<String, String> m1 = new HashMap<String, String>();
+                    m1.put("key", key);
+                    m1.put("currentSize", String.valueOf(currentSize));
+                    m1.put("totalSize", String.valueOf(totalSize));
+                    m1.put("id", _id);
+                    activity.runOnUiThread(
+                            new Runnable() {
+                                @Override
+                                public void run() {
+                                    channel.invokeMethod("onProgress", m1);
+                                }
+                            });
+                }
+            });
+            if (_callbackUrl != "" && _callbackUrl != null) {
+
+                try {
+                    JSONObject jsonObjs = new JSONObject(_callbackVars);
+                    put.setCallbackParam(new HashMap<String, String>() {
+                        {
+                            put("callbackUrl", _callbackUrl);
+                            put("callbackHost", _callbackHost);
+                            put("callbackBodyType", _callbackBodyType);
+                            put("callbackBody", _callbackBody);
+                            //{"bucket":${bucket},"object":${object},"etag":${etag},"size":${size},"mimeType":${mimeType},"imageInfo.height":${imageInfo.height},"imageInfo.width":${imageInfo.width},"imageInfo.format":${imageInfo.format}}
+                        }
+                    });
+                    HashMap<String, String> _vars = new HashMap();
+                    for (int i = 0; i < jsonObjs.names().length(); i++) {
+                        _vars.put(jsonObjs.names().getString(i), jsonObjs.getString(jsonObjs.names().getString(i)));
+                    }
+                    put.setCallbackVars(_vars);
+                } catch (JSONException e) {
+                    final Map<String, String> m1 = new HashMap();
+                    m1.put("result", "fail");
+                    m1.put("id", _id);
+                    m1.put("key", key);
+                    m1.put("message", "callbackVars 格式错误");
+                    activity.runOnUiThread(
+                            new Runnable() {
+                                @Override
+                                public void run() {
+                                    channel.invokeMethod("onUpload", m1);
+                                }
+                            });
+                    return;
+                }
+
+            }
+            OSSAsyncTask task = oss.asyncPutObject(put, new OSSCompletedCallback<PutObjectRequest, PutObjectResult>() {
+                        @Override
+                        public void onSuccess(PutObjectRequest request, PutObjectResult result) {
+                            Log.d("onSuccess", "onSuccess");
+                            Log.d("ETag", result.getETag());
+                            Log.d("RequestId", result.getRequestId());
+
+                            String serverCallbackReturnJson = result.getServerCallbackReturnBody();
+                            final Map<String, String> m1 = new HashMap();
+                            m1.put("result", "success");
+                            m1.put("tag", result.getETag());
+                            m1.put("id", _id);
+                            m1.put("key", key);
+                            m1.put("servercallback", serverCallbackReturnJson);
+                            m1.put("requestid", result.getRequestId());
+                            activity.runOnUiThread(
+                                    new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            channel.invokeMethod("onUpload", m1);
+                                        }
+                                    });
+                        }
+
+                        @Override
+                        public void onFailure(PutObjectRequest request, ClientException clientExcepion, ServiceException serviceException) {
+                            // 请求异常
+                            final Map<String, String> m1 = new HashMap();
+                            if (clientExcepion != null) {
+                                // 本地异常如网络异常等
+                                clientExcepion.printStackTrace();
+                                m1.put("result", "fail");
+                                m1.put("id", _id);
+                                m1.put("key", key);
+                                m1.put("message", clientExcepion.getMessage());
+                            }
+                            if (serviceException != null) {
+                                // 服务异常
+                                Log.e("ErrorCode", serviceException.getErrorCode());
+                                Log.e("RequestId", serviceException.getRequestId());
+                                Log.e("HostId", serviceException.getHostId());
+                                Log.e("RawMessage", serviceException.getRawMessage());
+
+
+                                m1.put("result", "fail");
+                                m1.put("id", _id);
+                                m1.put("key", key);
+                                m1.put("message", serviceException.getRawMessage());
+                            }
+                            activity.runOnUiThread(
+                                    new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            channel.invokeMethod("onUpload", m1);
+                                        }
+                                    });
+                        }
+                    }
+            );
+        }
+    }
+
+    private void uploadByte(final MethodCall call) {
+        final String key = call.argument("key");
+        final String _id = call.argument("id");
+        if (oss == null) {
+            final Map<String, String> m1 = new HashMap();
+            m1.put("result", "fail");
+            m1.put("id", _id);
+            m1.put("key", key);
+            m1.put("message", "请先初始化");
+            channel.invokeMethod("onUpload", m1);
+
+        } else {
+            final String bucket = call.argument("bucket");
+            final byte[] fileByte = call.argument("fileByte");
+            final String _callbackUrl = call.argument("callbackUrl");
+            final String _callbackHost = call.argument("callbackHost");
+            final String _callbackBodyType = call.argument("callbackBodyType");
+            final String _callbackBody = call.argument("callbackBody");
+            final String _callbackVars = call.argument("callbackVars");
+            PutObjectRequest put = new PutObjectRequest(bucket, key, fileByte);
             put.setProgressCallback(new OSSProgressCallback<PutObjectRequest>() {
                 @Override
                 public void onProgress(PutObjectRequest request, long currentSize, long totalSize) {
